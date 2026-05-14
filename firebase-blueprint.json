@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "Member": {
+      "title": "Member",
+      "description": "Lab member data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "img": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "role"]
+    },
+    "Alumni": {
+      "title": "Alumni",
+      "description": "Alumni data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "company": { "type": "string" },
+        "img": { "type": "string" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "company"]
+    },
+    "ProfessorData": {
+      "title": "ProfessorData",
+      "description": "Professor profile data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "affiliation": { "type": "string" },
+        "email": { "type": "string" },
+        "img": { "type": "string" },
+        "degrees": { "type": "array", "items": { "type": "string" } },
+        "career": { "type": "array", "items": { "type": "string" } },
+        "awards": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "subtitle": { "type": "string" } } } }
+      },
+      "required": ["name", "affiliation", "email"]
+    },
+    "Research": {
+      "title": "Research",
+      "description": "Research project data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "fullDescription": { "type": "array", "items": { "type": "string" } },
+        "imageUrl": { "type": "string" },
+        "detailImageUrl": { "type": "string" },
+        "publications": { "type": "array", "items": { "type": "string" } },
+        "references": { "type": "array", "items": { "type": "string" } },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "id"]
+    },
+    "GalleryImage": {
+      "title": "GalleryImage",
+      "description": "Lab gallery image data",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "url": { "type": "string" },
+        "year": { "type": "number" },
+        "month": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["url", "year", "month"]
+    }
+  },
+  "firestore": {
+    "members": {
+      "schema": "Member",
+      "description": "List of current lab members"
+    },
+    "alumni": {
+      "schema": "Alumni",
+      "description": "List of lab alumni"
+    },
+    "research": {
+      "schema": "Research",
+      "description": "List of research projects"
+    },
+    "gallery": {
+      "schema": "GalleryImage",
+      "description": "List of lab gallery images"
+    },
+    "settings/lab": {
+      "schema": "ProfessorData",
+      "description": "Global lab settings and professor data"
+    }
+  }
+}

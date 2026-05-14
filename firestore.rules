@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // Trust specific emails for admin access in this lab environment
+      return isSignedIn() && (
+        request.auth.token.email == 'admin@cmml.lab' || 
+        request.auth.token.email == 'eslehoon7@gmail.com'
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // --- Validation Helpers ---
+    
+    function isValidMember(data) {
+      return data.keys().hasAll(['name', 'role']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 100;
+    }
+
+    function isValidAlumni(data) {
+      return data.keys().hasAll(['name']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100;
+    }
+
+    function isValidResearch(data) {
+      return data.keys().hasAll(['title']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 500;
+    }
+
+    function isValidGallery(data) {
+      // Standardize to exactly what is written in DataContext setGallery
+      return data.keys().hasAll(['url', 'year', 'month', 'createdAt']) &&
+             data.keys().size() == 4 &&
+             data.url is string && data.url.size() > 0 &&
+             data.year is number && data.year >= 2000 && data.year <= 2100 &&
+             data.month is number && data.month >= 1 && data.month <= 12 &&
+             data.createdAt is string;
+    }
+
+    // --- Collections ---
+
+    match /members/{memberId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidMember(incoming());
+    }
+
+    match /alumni/{alumniId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidAlumni(incoming());
+    }
+
+    match /research/{researchId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidResearch(incoming());
+    }
+
+    match /gallery/{photoId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidGallery(incoming());
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

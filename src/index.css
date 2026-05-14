@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Noto+Sans+KR:wght@100..900&family=Inter:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Inter", sans-serif;
+  --font-korean: "Noto Sans KR", sans-serif;
+  
+  --color-brand-paper: #fcfbf9;
+  --color-brand-ink: #111111;
+  --color-brand-gold: #c5a059;
+  --color-brand-muted: #666666;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-paper text-brand-ink font-sans antialiased selection:bg-brand-gold/20 leading-relaxed tracking-tight;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-medium tracking-tight;
+  }
+}
+
+.section-full {
+  @apply min-h-screen flex flex-col;
+}
+
+.container-custom {
+  @apply max-w-7xl mx-auto px-6 w-full;
+}
