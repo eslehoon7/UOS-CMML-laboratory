@@ -806,7 +806,22 @@ export default function AdminDashboard() {
                        className="w-[448px] aspect-video bg-white flex items-center justify-center rounded-2xl cursor-pointer overflow-hidden relative border border-brand-ink/5 shrink-0"
                      >
                         {item.imageUrl ? (
-                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.title} 
+                            className="w-full h-full object-contain" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = "w-full h-full flex items-center justify-center";
+                                fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                                parent.appendChild(fallback);
+                              }
+                            }}
+                          />
                         ) : (
                           <ImageIcon className="w-12 h-12 text-gray-400" />
                         )}
@@ -932,7 +947,22 @@ export default function AdminDashboard() {
                   className="w-[448px] aspect-[16/9] bg-white flex items-center justify-center rounded-2xl shrink-0 cursor-pointer overflow-hidden relative group border border-brand-ink/5"
                 >
                   {localProfessor.img ? (
-                    <img src={localProfessor.img} alt={localProfessor.name} className="w-full h-full object-cover" />
+                    <img 
+                      src={localProfessor.img} 
+                      alt={localProfessor.name} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const fallback = document.createElement('div');
+                          fallback.className = "w-full h-full flex items-center justify-center";
+                          fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus text-gray-400"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+                          parent.appendChild(fallback);
+                        }
+                      }}
+                    />
                   ) : (
                     <Plus className="w-10 h-10 text-gray-400" />
                   )}
@@ -1173,7 +1203,23 @@ export default function AdminDashboard() {
                         className="aspect-square bg-white rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden relative border border-brand-ink/5"
                       >
                          {m.img ? (
-                           <img src={m.img} alt={m.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                           <img 
+                            src={m.img} 
+                            alt={m.name} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = "w-full h-full flex items-center justify-center";
+                                fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                                parent.appendChild(fallback);
+                              }
+                            }}
+                          />
                          ) : (
                            <ImageIcon className="w-8 h-8 text-gray-400" />
                          )}
@@ -1270,7 +1316,23 @@ export default function AdminDashboard() {
                         className="aspect-square bg-white rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden relative border border-brand-ink/5"
                       >
                          {m.img ? (
-                           <img src={m.img} alt={m.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                           <img 
+                            src={m.img} 
+                            alt={m.name} 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                const fallback = document.createElement('div');
+                                fallback.className = "w-full h-full flex items-center justify-center";
+                                fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+                                parent.appendChild(fallback);
+                              }
+                            }}
+                          />
                          ) : (
                            <ImageIcon className="w-8 h-8 text-gray-400" />
                          )}

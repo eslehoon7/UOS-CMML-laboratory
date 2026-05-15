@@ -59,6 +59,17 @@ export default function Members() {
                   alt={professor.name} 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const fallback = document.createElement('div');
+                      fallback.className = "w-full h-full flex items-center justify-center bg-brand-paper text-brand-ink/20";
+                      fallback.innerText = "No Image";
+                      parent.appendChild(fallback);
+                    }
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-brand-paper text-brand-ink/20">
@@ -130,6 +141,17 @@ export default function Members() {
                         alt={m.name} 
                         className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            const fallback = document.createElement('div');
+                            fallback.className = "w-full h-full flex items-center justify-center bg-brand-paper text-brand-ink/10";
+                            fallback.innerHTML = '<span class="text-[12px] uppercase tracking-widest font-bold">No Photo</span>';
+                            parent.appendChild(fallback);
+                          }
+                        }}
                       />
                      ) : (
                        <div className="w-full h-full flex items-center justify-center bg-brand-paper text-brand-ink/10">
@@ -137,8 +159,8 @@ export default function Members() {
                        </div>
                      )}
                   </div>
-                  <h4 className="text-[15px] font-bold tracking-[0.1em]">{m.name}</h4>
-                  <p className="text-[12px] tracking-widest text-brand-muted uppercase mt-1">{m.role}</p>
+                  <h4 className="text-[13px] font-medium font-sans tracking-[0.02em]">{m.name}</h4>
+                  <p className="text-[11px] font-sans text-brand-muted mt-1 opacity-40 uppercase tracking-wider">{m.role}</p>
                 </div>
               ))}
            </div>
@@ -157,6 +179,17 @@ export default function Members() {
                       alt={a.name} 
                       className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const fallback = document.createElement('div');
+                          fallback.className = "w-full h-full flex items-center justify-center bg-brand-paper text-brand-ink/10";
+                          fallback.innerHTML = '<span class="text-[12px] uppercase tracking-widest font-bold">No Photo</span>';
+                          parent.appendChild(fallback);
+                        }
+                      }}
                     />
                    ) : (
                      <div className="w-full h-full flex items-center justify-center bg-brand-paper text-brand-ink/10">
@@ -164,11 +197,11 @@ export default function Members() {
                      </div>
                    )}
                 </div>
-                <h4 className="text-[14px] font-bold tracking-[0.05em] leading-tight">
-                  {a.name}
+                <h4 className="text-[13px] font-medium font-sans tracking-[0.02em] leading-tight">
+                  {a.name.replace(/[()]/g, '')}
                 </h4>
                 {a.company && (
-                  <p className="text-[12px] text-brand-muted uppercase tracking-wider font-light mt-1 leading-tight">{a.company}</p>
+                  <p className="text-[11px] font-sans text-brand-muted mt-1 leading-tight opacity-40 uppercase tracking-wider">{a.company.replace(/[()]/g, '')}</p>
                 )}
               </div>
             ))}

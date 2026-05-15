@@ -127,7 +127,7 @@ export default function Publications() {
                         ))}
                       </p>
                       <p className="text-[12px] text-brand-muted font-light mt-2 italic opacity-60">
-                        {pub.journal}{pub.details ? `, ${pub.details}` : ''}, {pub.year}
+                        {pub.journal.replace(/[()]/g, '')}{pub.details ? `, ${pub.details.replace(/[()]/g, '')}` : ''}, {pub.year}
                       </p>
                     </div>
                   </motion.div>
@@ -147,7 +147,7 @@ export default function Publications() {
                       ) : (
                         <>
                           <ChevronDown className="w-3 h-3 transition-transform group-hover:translate-y-0.5" />
-                          See More ({groupedPublications[year].length - 3} more)
+                          See More {groupedPublications[year].length - 3} more
                         </>
                       )}
                     </button>
