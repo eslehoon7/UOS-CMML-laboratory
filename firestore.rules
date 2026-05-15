@@ -14,8 +14,10 @@ service cloud.firestore {
     function isAdmin() {
       // Trust specific emails for admin access in this lab environment
       return isSignedIn() && (
+        request.auth.token.email == 'admin_v4@cmml.com' ||
         request.auth.token.email == 'admin@cmml.lab' || 
-        request.auth.token.email == 'eslehoon7@gmail.com'
+        request.auth.token.email == 'eslehoon7@gmail.com' ||
+        request.auth.token.email.matches('.*@cmml\\.com$')
       );
     }
 
@@ -42,35 +44,48 @@ service cloud.firestore {
     }
 
     function isValidGallery(data) {
-      // Standardize to exactly what is written in DataContext setGallery
-      return data.keys().hasAll(['url', 'year', 'month', 'createdAt']) &&
-             data.keys().size() == 4 &&
+      return data.keys().hasAll(['url', 'createdAt']) &&
              data.url is string && data.url.size() > 0 &&
-             data.year is number && data.year >= 2000 && data.year <= 2100 &&
-             data.month is number && data.month >= 1 && data.month <= 12 &&
              data.createdAt is string;
     }
 
-    // --- Collections ---
+    function isValidPublication(data) {
+      return data.keys().hasAll(['title', 'authors', 'journal', 'year']) &&
+             data.title is string && 
+             data.authors is string &&
+             data.journal is string &&
+             data.year is number;
+    }
 
+    // --- Collections ---
     match /members/{memberId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidMember(incoming());
+      allow create, update: if isAdmin() && isValidMember(incoming());
+      allow delete: if isAdmin();
     }
 
     match /alumni/{alumniId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidAlumni(incoming());
+      allow create, update: if isAdmin() && isValidAlumni(incoming());
+      allow delete: if isAdmin();
     }
 
     match /research/{researchId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidResearch(incoming());
+      allow create, update: if isAdmin() && isValidResearch(incoming());
+      allow delete: if isAdmin();
     }
 
     match /gallery/{photoId} {
       allow read: if true;
-      allow write: if isAdmin() && isValidGallery(incoming());
+      allow create, update: if isAdmin() && isValidGallery(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /publications/{pubId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidPublication(incoming());
+      allow delete: if isAdmin();
     }
 
     match /settings/{settingId} {

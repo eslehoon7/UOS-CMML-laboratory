@@ -4,11 +4,12 @@
  */
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { publications } from '../data/publications';
+import { useData } from '../context/DataContext';
 
 export default function Publications() {
+  const { publications } = useData();
   const [expandedYears, setExpandedYears] = useState<Record<number, boolean>>({});
 
   const toggleYear = (year: number) => {
@@ -32,9 +33,14 @@ export default function Publications() {
     .map(Number)
     .sort((a, b) => b - a);
 
-  // Sort publications within each year by ID in descending order
+  // Sort publications within each year by numericId in descending order
   sortedYears.forEach(year => {
-    groupedPublications[year].sort((a, b) => b.id - a.id);
+    groupedPublications[year].sort((a, b) => {
+      if (b.numericId !== undefined && a.numericId !== undefined) {
+        return b.numericId - a.numericId;
+      }
+      return b.id.localeCompare(a.id);
+    });
   });
 
   return (
@@ -91,7 +97,7 @@ export default function Publications() {
             >
               <h2 className="text-4xl font-serif mb-1 border-b border-brand-ink/10 pb-4">{year}</h2>
               <div className="space-y-12 pt-12">
-                {(expandedYears[year] ? groupedPublications[year] : groupedPublications[year].slice(0, 3)).map((pub) => (
+                {(expandedYears[year] ? groupedPublications[year] : groupedPublications[year].slice(0, 3)).map((pub, idx) => (
                   <motion.div 
                     layout
                     initial={{ opacity: 0 }}
@@ -100,7 +106,9 @@ export default function Publications() {
                     key={pub.id} 
                     className="grid grid-cols-[40px_1fr] gap-8 group"
                   >
-                    <span className="text-sm font-bold opacity-30 mt-1 cursor-default select-none">{pub.id}</span>
+                    <span className="text-sm font-bold opacity-30 mt-1 cursor-default select-none">
+                      {pub.numericId || groupedPublications[year].length - idx}
+                    </span>
                     <div>
                       <h3 className="text-lg font-medium leading-relaxed mb-1 cursor-pointer hover:text-brand-gold transition-colors">
                         {pub.title} 

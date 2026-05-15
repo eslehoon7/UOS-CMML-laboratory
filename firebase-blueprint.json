@@ -68,7 +68,22 @@
         "month": { "type": "number" },
         "createdAt": { "type": "string" }
       },
-      "required": ["url", "year", "month"]
+      "required": ["url"]
+    },
+    "Publication": {
+      "title": "Publication",
+      "description": "Publication data",
+      "type": "object",
+      "properties": {
+        "authors": { "type": "string" },
+        "title": { "type": "string" },
+        "journal": { "type": "string" },
+        "year": { "type": "number" },
+        "details": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "numericId": { "type": "number" }
+      },
+      "required": ["authors", "title", "journal", "year"]
     }
   },
   "firestore": {
@@ -87,6 +102,10 @@
     "gallery": {
       "schema": "GalleryImage",
       "description": "List of lab gallery images"
+    },
+    "publications": {
+      "schema": "Publication",
+      "description": "List of publications"
     },
     "settings/lab": {
       "schema": "ProfessorData",

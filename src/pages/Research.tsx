@@ -10,7 +10,7 @@ import { Plus } from 'lucide-react';
 import { useData } from '../context/DataContext';
 
 export default function Research() {
-  const { research } = useData();
+  const { research, siteSettings } = useData();
 
   return (
     <div className="bg-brand-paper min-h-screen">
@@ -18,7 +18,7 @@ export default function Research() {
       <section className="min-h-[50vh] flex flex-col justify-center relative px-6 md:px-20 overflow-hidden text-white">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=2670" 
+            src={siteSettings.researchHeroImg} 
             alt="Research background" 
             className="w-full h-full object-cover opacity-60"
             referrerPolicy="no-referrer"
@@ -96,8 +96,8 @@ export default function Research() {
                 </div>
               </div>
 
-              <div className="flex-1 w-full">
-                <Link to={`/research/${item.id}`} className="block relative aspect-[16/10] overflow-hidden group border border-brand-ink/5 bg-white">
+              <div className="md:w-[448px] w-full shrink-0">
+                <Link to={`/research/${item.id}`} className="block relative aspect-video overflow-hidden group border border-brand-ink/5 bg-white">
                   {item.imageUrl ? (
                     <img 
                       src={item.imageUrl} 

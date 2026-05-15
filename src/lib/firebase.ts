@@ -17,34 +17,27 @@ export const loginWithCmml = async (id: string, pw: string) => {
   const normalizedId = id.trim().toLowerCase();
   const normalizedPw = pw.trim().toLowerCase();
 
-  // Allow various common combinations for admin access
-  const isValidId = ['cmml', 'admin', 'lab', 'user'].includes(normalizedId);
-  const isValidPw = ['cmml', 'admin', '1234', '123456', 'lab'].includes(normalizedPw);
-
-  if (isValidId && isValidPw) {
-    const email = 'admin@cmml.lab';
-    const password = 'cmmlcmml'; // Fixed internal password for Firebase Auth
+  // Strictly require specific credentials as requested by user
+  if (normalizedId === 'admin@cmml.com' && normalizedPw === 'admincmml') {
+    // We use a specific internal email for the Firebase Auth singleton.
+    const internalEmail = 'admin_v4@cmml.com'; 
+    const internalPassword = 'admincmml'; 
     
     try {
-      return await signInWithEmailAndPassword(auth, email, password);
+      console.log('Attempting admin login...');
+      return await signInWithEmailAndPassword(auth, internalEmail, internalPassword);
     } catch (error: any) {
-      // If user doesn't exist, try creating it once
-      // auth/invalid-credential is the common error for missing user or wrong password in newer SDKs
-      if (
-        error.code === 'auth/invalid-credential' || 
-        error.code === 'auth/user-not-found' || 
-        error.code === 'auth/wrong-password'
-      ) {
+      const errorCode = error.code || '';
+      console.warn('Initial login failed:', errorCode);
+      
+      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
         try {
-          return await createUserWithEmailAndPassword(auth, email, password);
+          console.log('Bootstrapping admin account...');
+          return await createUserWithEmailAndPassword(auth, internalEmail, internalPassword);
         } catch (createError: any) {
           if (createError.code === 'auth/email-already-in-use') {
-            // Sign in again if creation failed due to existing user (race condition)
-            try {
-              return await signInWithEmailAndPassword(auth, email, password);
-            } catch (retryError) {
-              throw error; // Throw original sign-in error
-            }
+            console.log('Account exists, retrying login...');
+            return await signInWithEmailAndPassword(auth, internalEmail, internalPassword);
           }
           throw createError;
         }
@@ -52,7 +45,11 @@ export const loginWithCmml = async (id: string, pw: string) => {
       throw error;
     }
   }
-  throw new Error('Invalid credentials');
+  
+  // Specific error for unauthorized credentials
+  const error = new Error('Invalid ID or Password.');
+  (error as any).code = 'auth/invalid-credential';
+  throw error;
 };
 
 export const logout = () => signOut(auth);

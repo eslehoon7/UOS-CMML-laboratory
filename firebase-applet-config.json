@@ -1,9 +1,10 @@
 {
-  "projectId": "uos-cmml-laboratory-1",
-  "appId": "1:354176958552:web:xxxxxxxxxxxx",
-  "apiKey": "AIza...",
-  "authDomain": "uos-cmml-laboratory-1.firebaseapp.com",
-  "storageBucket": "uos-cmml-laboratory-1.firebasestorage.app",
-  "messagingSenderId": "354176958552",
+  "projectId": "onbrandium",
+  "appId": "1:226462937186:web:46fc76228b238aeffa613b",
+  "apiKey": "AIzaSyDpPe2wf2ddDy0l8tNMZE2y4NdyNBK_aAU",
+  "authDomain": "onbrandium.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-b90ae4cf-164f-4e51-89f6-6964d37aed58",
+  "storageBucket": "onbrandium.firebasestorage.app",
+  "messagingSenderId": "226462937186",
   "measurementId": ""
 }

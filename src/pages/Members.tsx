@@ -52,7 +52,7 @@ export default function Members() {
       <div className="container-custom pt-32">
         {/* Professor Section */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-24 mb-60">
-           <div className="aspect-[4/5] bg-brand-paper overflow-hidden border border-brand-ink/5">
+           <div className="aspect-[8/9] bg-brand-paper overflow-hidden border border-brand-ink/5">
               {professor.img ? (
                 <img 
                   src={professor.img} 
@@ -123,12 +123,12 @@ export default function Members() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {members.map((m, i) => (
                 <div key={i} className="text-center group">
-                  <div className="aspect-[3/4] bg-brand-paper overflow-hidden mb-4 transition-transform group-hover:scale-[0.98] border border-brand-ink/5">
+                  <div className="aspect-square bg-brand-paper overflow-hidden mb-4 border border-brand-ink/5">
                      {m.img ? (
                        <img 
                         src={m.img} 
                         alt={m.name} 
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                         referrerPolicy="no-referrer"
                       />
                      ) : (
@@ -150,12 +150,12 @@ export default function Members() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-12">
             {alumni.map((a, i) => (
               <div key={i} className="group">
-                <div className="aspect-[3/4] bg-brand-paper overflow-hidden mb-4 transition-transform group-hover:scale-[0.98] border border-brand-ink/5">
+                <div className="aspect-square bg-brand-paper overflow-hidden mb-4 border border-brand-ink/5">
                    {a.img ? (
                      <img 
                       src={a.img} 
                       alt={a.name} 
-                      className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                      className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
                     />
                    ) : (

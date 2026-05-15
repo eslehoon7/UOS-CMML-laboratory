@@ -23,7 +23,7 @@ export default function AdminLogin() {
       navigate('/admin/dashboard');
     } catch (error: any) {
       console.error('Google Login error:', error);
-      alert('Google 로그인 중 오류가 발생했습니다.');
+      alert(`Google login error: ${error.message || 'Unknown error'}. Please try again.`);
     } finally {
       setIsLoggingIn(false);
     }
@@ -31,20 +31,28 @@ export default function AdminLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!id || !password) {
+      alert('Please enter both ID and Password.');
+      return;
+    }
+
     setIsLoggingIn(true);
     try {
       await loginWithCmml(id, password);
       navigate('/admin/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
-      if (error.message === 'Invalid credentials') {
-        alert('아이디 또는 비밀번호가 일치하지 않습니다.');
-      } else if (error.code === 'auth/operation-not-allowed') {
-        alert('Firebase 콘솔에서 이메일/비밀번호 로그인 방법이 비활성화되어 있습니다.');
-      } else if (error.code === 'auth/admin-restricted-operation') {
-        alert('Firebase 설정이 제한되어 있습니다. 콘솔에서 로그 기능을 확인해주세요.');
+      const errorCode = error.code;
+      const errorMessage = error.message;
+
+      if (errorCode === 'auth/operation-not-allowed') {
+        alert('Email/password login method is disabled in the Firebase console. Please enable it or use Google Login.');
+      } else if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
+        alert('Invalid ID or Password.');
+      } else if (errorCode === 'auth/too-many-requests') {
+        alert('Too many failed login attempts. Please try again later.');
       } else {
-        alert('로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        alert(`Login failed: ${errorMessage || 'Unknown error'}. Please try Google Login if this persists.`);
       }
     } finally {
       setIsLoggingIn(false);
@@ -70,26 +78,29 @@ export default function AdminLogin() {
         </div>
         
         <form onSubmit={handleLogin} className="w-full space-y-10">
-          <div className="space-y-3">
+          <div className="space-y-3 relative group">
             <label className="text-[10px] font-bold tracking-[0.3em] uppercase text-brand-gold ml-1">ID</label>
             <input 
               type="text" 
               value={id}
-              placeholder="admin"
+              placeholder="admin@cmml.com"
               onChange={(e) => setId(e.target.value)}
               className="w-full bg-brand-ink/5 border-none rounded-md py-4 px-6 focus:ring-1 focus:ring-brand-gold outline-none transition-all placeholder:text-brand-muted/30"
             />
           </div>
-
+ 
           <div className="space-y-3">
             <label className="text-[10px] font-bold tracking-[0.3em] uppercase text-brand-gold ml-1">PASSWORD</label>
             <input 
               type="password" 
               value={password}
-              placeholder="cmml"
+              placeholder="••••••"
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-brand-ink/5 border-none rounded-md py-4 px-6 focus:ring-1 focus:ring-brand-gold outline-none transition-all placeholder:text-brand-muted/30"
             />
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[9px] text-brand-muted/40 font-bold tracking-wider italic">Enter authorized credentials</span>
+            </div>
           </div>
 
           <button 
@@ -97,7 +108,7 @@ export default function AdminLogin() {
             disabled={isLoggingIn}
             className="w-full bg-brand-ink text-brand-paper py-5 rounded-md text-[11px] font-bold tracking-[0.5em] uppercase hover:bg-brand-gold transition-all duration-500 shadow-xl shadow-brand-ink/10 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoggingIn ? '로그인 중...' : '확인'}
+            {isLoggingIn ? 'LOGGING IN...' : 'SIGN IN'}
           </button>
 
           <div className="relative flex items-center justify-center">

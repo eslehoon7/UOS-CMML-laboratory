@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 
 export default function Home() {
-  const { professor, research } = useData();
+  const { professor, research, siteSettings } = useData();
   
   // Use first 6 research items for the grid if available
   const displayProjects = research.length > 0 ? research.slice(0, 6) : [
@@ -29,7 +29,7 @@ export default function Home() {
       <section className="min-h-[85vh] flex flex-col justify-center relative px-6 md:px-20 overflow-hidden text-white">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&q=80&w=2670" 
+            src={siteSettings.homeHeroImg} 
             alt="Chemistry Research" 
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
@@ -60,7 +60,7 @@ export default function Home() {
             </h1>
 
             <p className="text-[12px] font-bold tracking-[0.4em] mb-14 opacity-60 uppercase text-brand-paper/50">
-              서울시립대학교 화학공학과 계산분자모델링 연구실
+              Computational Molecular Modeling Lab, University of Seoul
             </p>
 
             <p className="max-w-2xl text-brand-paper/70 font-light leading-relaxed mb-16 text-lg tracking-tight">
@@ -122,7 +122,7 @@ export default function Home() {
         <div className="container-custom grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
           <div className="aspect-square bg-brand-paper overflow-hidden shadow-2xl relative group max-w-lg mx-auto md:ml-0">
               <img 
-               src="https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=1000" 
+               src={siteSettings.homeIntroImg} 
                alt="Scientific research" 
                className="w-full h-full object-cover opacity-80 transition-all duration-1000 group-hover:scale-105"
                referrerPolicy="no-referrer"
