@@ -34,10 +34,10 @@ export default function Home() {
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          {/* Lighter overlays to keep the photo visible while maintaining professional look */}
-          <div className="absolute inset-0 bg-brand-ink/30" />
-          <div className="absolute inset-0 bg-gradient-to-r from-brand-ink/70 via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-ink/80 via-transparent to-brand-ink/20" />
+          {/* Darker overlays to improve text readability as requested */}
+          <div className="absolute inset-0 bg-brand-ink/50" />
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-ink/90 via-brand-ink/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-brand-ink/95 via-transparent to-brand-ink/30" />
         </div>
         
         <div className="container-custom relative z-10 flex-1 flex flex-col justify-center pt-24 pb-32">
@@ -120,11 +120,11 @@ export default function Home() {
       {/* Intro Section */}
       <section className="py-40 bg-white">
         <div className="container-custom grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
-          <div className="aspect-square bg-brand-paper overflow-hidden shadow-2xl relative group max-w-lg mx-auto md:ml-0">
+          <div className="aspect-square bg-white overflow-hidden shadow-2xl relative group max-w-lg mx-auto md:ml-0 p-12 flex items-center justify-center">
               <img 
                src={siteSettings.homeIntroImg} 
                alt="Scientific research" 
-               className="w-full h-full object-cover opacity-80 transition-all duration-1000 group-hover:scale-105"
+               className="max-w-full max-h-full object-contain transition-all duration-1000 group-hover:scale-105"
                referrerPolicy="no-referrer"
              />
             <div className="absolute inset-0 bg-brand-ink/5 pointer-events-none" />
@@ -134,7 +134,7 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-3 mb-6">
                    <div className="h-[1px] w-8 bg-brand-gold" />
-                   <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold">About Lab</span>
+                   <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold">About LaB</span>
                 </div>
                 <h2 className="text-5xl md:text-6xl font-serif leading-tight text-brand-ink">
                   Understanding Nature <br /> <span className="italic font-normal text-brand-gold/80">Through Simulation</span>
@@ -142,15 +142,24 @@ export default function Home() {
               </div>
               
               <div className="space-y-8">
-                <p className="text-xl text-brand-ink/90 font-light leading-relaxed max-w-lg">
-                  The goal is to understand interesting physical and biological phenomena using the power of computer simulation.
+                <p className="text-xl text-brand-ink/90 font-light leading-relaxed max-w-2xl">
+                  Welcome to the <strong className="font-bold">Computational Molecular Modeling Laboratory</strong>, supervised by <strong className="font-bold">Prof. Rakwoo Chang</strong> in the <strong className="font-bold">Department of Applied Chemistry</strong>, <strong className="font-bold">University of Seoul</strong>, <strong className="font-bold">Republic of Korea</strong>.
                 </p>
 
-                <p className="text-[12px] leading-relaxed text-brand-muted uppercase tracking-[0.25em] font-medium opacity-80 max-w-md border-l-2 border-brand-gold/30 pl-6">
-                  Supervised by {professor.name}, our laboratory is housed in the {professor.affiliation}.
-                  We combine rigorous theoretical frameworks with cutting-edge 
-                  computational methods.
-                </p>
+                <div className="space-y-4 text-[13px] leading-relaxed text-brand-muted font-normal border-l-2 border-brand-gold/30 pl-6 max-w-2xl">
+                  <p>
+                    Our laboratory investigates chemical, physical, biological, and materials phenomena using computer-based molecular modeling and simulation approaches. We employ a broad range of computational techniques, including <strong className="font-medium text-brand-ink">Density Functional Theory (DFT)</strong>, <strong className="font-medium text-brand-ink">Molecular Dynamics (MD) simulations</strong>, <strong className="font-medium text-brand-ink">Machine-Learning Interatomic Potentials (MLIP)</strong>, and <strong className="font-medium text-brand-ink">AI-based property prediction</strong>.
+                  </p>
+                  <p>
+                    Our research aims to understand molecular mechanisms, predict physicochemical properties, and design functional materials by connecting atomic-scale structures with macroscopic behavior. Current research topics include <strong className="font-medium text-brand-ink">catalytic and energy materials</strong>, <strong className="font-medium text-brand-ink">biomolecular self-assembly</strong>, <strong className="font-medium text-brand-ink">biological membrane systems</strong>, <strong className="font-medium text-brand-ink">machine-learning-assisted molecular simulations</strong>, and <strong className="font-medium text-brand-ink">data-driven prediction of chemical properties</strong>.
+                  </p>
+                  <p>
+                    Through these studies, we seek to provide molecular-level insight into complex systems and develop computational strategies for materials discovery, environmental chemistry, and biological applications.
+                  </p>
+                  <p className="pt-2">
+                    If you have any questions, please contact <strong className="font-medium text-brand-ink">rchang90@uos.ac.kr</strong>.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-start pt-4">

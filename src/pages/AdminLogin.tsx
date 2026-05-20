@@ -42,17 +42,17 @@ export default function AdminLogin() {
       navigate('/admin/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorCode = error.code;
+      const errorCode = error.code || 'unknown';
       const errorMessage = error.message;
 
       if (errorCode === 'auth/operation-not-allowed') {
         alert('Email/password login method is disabled in the Firebase console. Please enable it or use Google Login.');
       } else if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
-        alert('Invalid ID or Password.');
+        alert(`Invalid ID or Password. (Code: ${errorCode})`);
       } else if (errorCode === 'auth/too-many-requests') {
         alert('Too many failed login attempts. Please try again later.');
       } else {
-        alert(`Login failed: ${errorMessage || 'Unknown error'}. Please try Google Login if this persists.`);
+        alert(`Login failed: ${errorMessage || 'Unknown error'}. (Code: ${errorCode})`);
       }
     } finally {
       setIsLoggingIn(false);

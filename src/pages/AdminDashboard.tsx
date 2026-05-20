@@ -12,7 +12,9 @@ import {
   LogOut,
   Home,
   X,
-  Plus
+  Plus,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -52,6 +54,8 @@ export default function AdminDashboard() {
   const [localGallery, setLocalGallery] = useState(gallery);
   const [localPublications, setLocalPublications] = useState(publications);
   const [localSiteSettings, setLocalSiteSettings] = useState(siteSettings);
+  const [editingTagIndex, setEditingTagIndex] = useState<number | null>(null);
+  const [newTagValue, setNewTagValue] = useState("");
   const [isDirty, setIsDirty] = useState({
     professor: false,
     research: false,
@@ -368,8 +372,10 @@ export default function AdminDashboard() {
     try {
       await setSiteSettings(localSiteSettings);
       setIsDirty(prev => ({ ...prev, settings: false }));
+      alert('설정이 성공적으로 저장되었습니다.');
     } catch (error) {
       console.error("Failed to save settings:", error);
+      alert('설정 저장에 실패했습니다.');
     } finally {
       setIsSaving(false);
     }
@@ -602,6 +608,19 @@ export default function AdminDashboard() {
   const handleEditPhoto = (photo: any) => {
     setEditingPhotoId(photo.id);
     setShowEditPhotoModal(true);
+  };
+
+  const movePublication = (index: number, direction: 'up' | 'down') => {
+    const newPublications = [...localPublications];
+    if (direction === 'up' && index > 0) {
+      [newPublications[index], newPublications[index - 1]] = [newPublications[index - 1], newPublications[index]];
+    } else if (direction === 'down' && index < newPublications.length - 1) {
+      [newPublications[index], newPublications[index + 1]] = [newPublications[index + 1], newPublications[index]];
+    } else {
+      return;
+    }
+    setLocalPublications(newPublications);
+    setIsDirty(prev => ({ ...prev, publications: true }));
   };
 
   const saveEditedPhoto = async () => {
@@ -1593,25 +1612,74 @@ export default function AdminDashboard() {
                                 />
                               </div>
                             ))}
-                            <button 
-                              onClick={() => {
-                                const tag = prompt('Enter new tag:');
-                                if (tag) {
-                                  const updatedTags = [...(pub.tags || []), tag];
-                                  const updated = [...localPublications];
-                                  updated[index] = { ...pub, tags: updatedTags };
-                                  setLocalPublications(updated);
-                                  setIsDirty(prev => ({ ...prev, publications: true }));
-                                }
-                              }}
-                              className="text-[10px] font-bold uppercase tracking-widest text-brand-gold hover:underline"
-                            >
-                              + Add Tag
-                            </button>
+
+                            {editingTagIndex === index ? (
+                              <input
+                                autoFocus
+                                type="text"
+                                value={newTagValue}
+                                placeholder="New tag..."
+                                onChange={(e) => setNewTagValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    if (newTagValue.trim()) {
+                                      const updatedTags = [...(pub.tags || []), newTagValue.trim()];
+                                      const updated = [...localPublications];
+                                      updated[index] = { ...pub, tags: updatedTags };
+                                      setLocalPublications(updated);
+                                      setIsDirty(prev => ({ ...prev, publications: true }));
+                                      setNewTagValue("");
+                                      setEditingTagIndex(null);
+                                    } else {
+                                      setEditingTagIndex(null);
+                                    }
+                                  } else if (e.key === 'Escape') {
+                                    setEditingTagIndex(null);
+                                    setNewTagValue("");
+                                  }
+                                }}
+                                onBlur={() => {
+                                  // Optional: Save on blur or just cancel
+                                  if (!newTagValue.trim()) {
+                                    setEditingTagIndex(null);
+                                  }
+                                }}
+                                className="text-[10px] font-bold uppercase tracking-widest bg-brand-ink/5 border-b border-brand-gold outline-none px-2 py-1 rounded"
+                              />
+                            ) : (
+                              <button 
+                                onClick={() => {
+                                  setEditingTagIndex(index);
+                                  setNewTagValue("");
+                                }}
+                                className="text-[10px] font-bold uppercase tracking-widest text-brand-gold hover:underline"
+                              >
+                                + Add Tag
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 items-end">
+                        <div className="flex flex-col gap-1 mb-2">
+                          <button 
+                            onClick={() => movePublication(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1 hover:bg-brand-gold/10 rounded text-brand-muted disabled:opacity-20 transition-colors"
+                            title="Move Up"
+                          >
+                            <ArrowUp className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => movePublication(index, 'down')}
+                            disabled={index === localPublications.length - 1}
+                            className="p-1 hover:bg-brand-gold/10 rounded text-brand-muted disabled:opacity-20 transition-colors"
+                            title="Move Down"
+                          >
+                            <ArrowDown className="w-4 h-4" />
+                          </button>
+                        </div>
                         <button 
                           onClick={(e) => {
                             e.preventDefault();
