@@ -71,7 +71,7 @@ export default function Photos() {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: (idx % 20) * 0.05, duration: 0.8 }}
-                    className={`${isLarge ? 'col-span-2 row-span-2' : 'col-span-1'} bg-brand-ink/5 overflow-hidden group relative shadow-md ring-1 ring-brand-ink/5 rounded-2xl`}
+                    className={`${isLarge ? 'col-span-2 row-span-2' : 'col-span-1'} bg-brand-ink/[0.03] overflow-hidden group relative shadow-md ring-1 ring-brand-ink/5 rounded-2xl flex items-center justify-center`}
                   >
                     <img 
                       src={photo.url} 
@@ -79,7 +79,7 @@ export default function Photos() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-all duration-1000 object-center" 
                       referrerPolicy="no-referrer" 
                     />
-                    <div className="absolute inset-0 bg-brand-ink/5 group-hover:bg-transparent transition-colors duration-700" />
+                    <div className="absolute inset-0 bg-brand-ink/5 group-hover:bg-transparent transition-colors duration-700 pointer-events-none" />
                     <div className="absolute inset-0 border border-brand-ink/5 pointer-events-none" />
                   </motion.div>
                 );
