@@ -23,15 +23,20 @@ export default function Home() {
     // ... fallback
   ];
 
+  const heroImgUrl = siteSettings.homeHeroImg?.includes('unsplash.com') 
+    ? siteSettings.homeHeroImg.replace(/q=\d+/, 'q=100').replace(/w=\d+/, 'w=3840')
+    : siteSettings.homeHeroImg;
+
   return (
     <div>
       {/* Hero Section */}
       <section className="min-h-[85vh] flex flex-col justify-center relative px-6 md:px-20 overflow-hidden text-white">
         <div className="absolute inset-0 z-0">
           <img 
-            src={siteSettings.homeHeroImg} 
+            src={heroImgUrl} 
             alt="Chemistry Research" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover will-change-transform"
+            style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', transform: 'translate3d(0,0,0)' }}
             referrerPolicy="no-referrer"
           />
           {/* Darker overlays to improve text readability as requested */}
@@ -124,7 +129,8 @@ export default function Home() {
               <img 
                src={siteSettings.homeIntroImg} 
                alt="Scientific research" 
-               className="max-w-full max-h-full object-contain transition-all duration-1000 group-hover:scale-105"
+               className="w-full h-full object-contain transition-all duration-1000 group-hover:scale-105 will-change-transform"
+               style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', transform: 'translate3d(0,0,0)' }}
                referrerPolicy="no-referrer"
              />
             <div className="absolute inset-0 bg-brand-ink/5 pointer-events-none" />

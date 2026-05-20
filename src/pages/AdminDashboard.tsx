@@ -1769,9 +1769,14 @@ export default function AdminDashboard() {
                   <h3 className="text-sm font-bold tracking-widest uppercase opacity-40">Home Intro Image</h3>
                   <div 
                     onClick={() => settingsHomeIntroRef.current?.click()}
-                    className="aspect-square bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center"
+                    className="aspect-square bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center p-4"
                   >
-                    <img src={localSiteSettings.homeIntroImg} alt="Home Intro" className="w-full h-full object-cover" />
+                    <img 
+                      src={localSiteSettings.homeIntroImg} 
+                      alt="Home Intro" 
+                      className="w-full h-full object-contain" 
+                      style={{ imageRendering: 'auto' }}
+                    />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Plus className="w-12 h-12 text-white" />
                     </div>
