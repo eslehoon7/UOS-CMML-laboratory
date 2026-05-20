@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 export default function ResearchDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { research } = useData();
+  const { research, siteSettings } = useData();
   const item = research.find((r) => r.id === id);
 
   useEffect(() => {
@@ -37,19 +37,19 @@ export default function ResearchDetail() {
     <div className="bg-brand-paper min-h-screen">
       {/* Header Image */}
       <div className="h-[60vh] w-full relative overflow-hidden border-b border-brand-ink/5 bg-brand-ink">
-        {(item.detailImageUrl || item.imageUrl) ? (
+        {siteSettings.researchHeroImg ? (
           <img 
-            src={item.detailImageUrl || item.imageUrl} 
-            alt={item.title} 
-            className="w-full h-full object-contain"
+            src={siteSettings.researchHeroImg} 
+            alt="Research background" 
+            className="w-full h-full object-cover opacity-60"
             referrerPolicy="no-referrer"
           />
         ) : (
           <div className="w-full h-full bg-brand-paper flex items-center justify-center">
-             <span className="text-brand-muted opacity-40 uppercase tracking-widest text-[10px] font-bold">Project Image</span>
+             <span className="text-brand-muted opacity-40 uppercase tracking-widest text-[10px] font-bold">Research Background</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-brand-ink/20" />
+        <div className="absolute inset-0 bg-brand-ink/40" />
       </div>
 
       <div className="container-custom -mt-24 relative z-10 pb-40">

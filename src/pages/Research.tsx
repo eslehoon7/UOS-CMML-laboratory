@@ -16,7 +16,7 @@ export default function Research() {
     <div className="bg-brand-paper min-h-screen">
       {/* Hero Section */}
       <section className="min-h-[50vh] flex flex-col justify-center relative px-6 md:px-20 overflow-hidden text-white">
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 bg-brand-ink">
           <img 
             src={siteSettings.researchHeroImg} 
             alt="Research background" 
@@ -79,13 +79,7 @@ export default function Research() {
                   </p>
                 </div>
 
-                <div className="pt-8 border-t border-brand-ink/5 flex items-center justify-between">
-                  {item.publications.length > 0 && (
-                    <p className="text-[12px] text-brand-muted italic font-light tracking-wide opacity-60">
-                      Featured in {item.publications[0].split(',')[0]}...
-                    </p>
-                  )}
-
+                <div className="pt-8 border-t border-brand-ink/5 flex items-center justify-end">
                   <Link 
                     to={`/research/${item.id}`}
                     className="inline-flex items-center gap-3 text-[12px] font-bold tracking-[0.3em] uppercase text-brand-ink group"
