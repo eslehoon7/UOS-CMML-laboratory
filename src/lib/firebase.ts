@@ -20,8 +20,11 @@ export const loginWithCmml = async (id: string, pw: string) => {
 
   console.log('Login attempt for ID:', normalizedId);
 
-  // Strictly require specific credentials as requested by user
-  if (normalizedId === 'admin@cmml.com' && (rawPw === 'admincmml' || lowerPw === 'admincmml')) {
+  // Strictly validate designated credentials
+  const isAuthorizedId = normalizedId === 'admin' || normalizedId === 'admin@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
+  const isAuthorizedPw = rawPw === 'admincmml' || lowerPw === 'admincmml';
+
+  if (isAuthorizedId && isAuthorizedPw) {
     // We use a specific internal email for the Firebase Auth singleton.
     const internalEmail = 'admin_v4@cmml.com'; 
     const internalPassword = 'admincmml'; 
