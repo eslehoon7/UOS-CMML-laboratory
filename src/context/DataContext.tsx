@@ -16,7 +16,8 @@ import {
   getDocs,
   getDoc,
   getDocFromServer,
-  deleteDoc
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -192,7 +193,7 @@ export const defaultAlumni: Alumni[] = [
   { name: 'Seonghoon Kim (2015)', company: 'Molcube', img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400" },
   { name: 'Yongbin Kim (2015)', company: 'Postdoc', img: "https://images.unsplash.com/photo-1492288991661-058aa541ff43?auto=format&fit=crop&q=80&w=400" },
   { name: 'Hyunwook Kim (2016)', company: 'Cosmax', img: "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?auto=format&fit=crop&q=80&w=400" },
-  { name: 'Seonghan Kim (2016)', company: 'PhD, Lehigh University', img: "https://images.unsplash.com/photo-1520341280432-4749d4fd01ff?auto=format&fit=crop&q=80&w=400" },
+  { name: 'Seonghan Kim (2016)', company: 'Ph.D.Student LEHIGH UNIVERSITY', img: "https://images.unsplash.com/photo-1520341280432-4749d4fd01ff?auto=format&fit=crop&q=80&w=400" },
   { name: 'Jeongmin Lee (2017)', company: 'Chong Kun Dang', img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400" },
   { name: 'Wontae Kim (2017)', company: '', img: "https://images.unsplash.com/photo-1531384441138-2736e62e0919?auto=format&fit=crop&q=80&w=400" },
   { name: 'Junyeol Lee (2018)', company: 'Dongjin Semichem', img: "https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?auto=format&fit=crop&q=80&w=400" },
@@ -201,15 +202,15 @@ export const defaultAlumni: Alumni[] = [
   { name: 'Yunjae Park (2019)', company: 'UNIST', img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=400" },
   { name: 'Sohyun Kim (2019)', company: 'Navy', img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=400" },
   { name: 'Jihye Na (2020)', company: 'Samsung Electronics', img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400" },
-  { name: 'Seungmin Yoon (2021)', company: '(PhD in USA)', img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400" },
-  { name: 'Youhyun Nam', company: '(PhD in USA)', img: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=crop&q=80&w=400" },
+  { name: 'Seungmin Yoon (2021)', company: 'Ph.D.Student in USA', img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400" },
+  { name: 'Youhyun Nam', company: 'Ph.D.Student in USA', img: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=crop&q=80&w=400" },
   { name: 'Jiyeon Hyun', company: '(Samsung)', img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400" },
   { name: 'Minjun Jung', company: 'Molecube', img: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=400" },
   { name: 'Chan Young Joe', company: 'EHR&C', img: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400" }
 ];
 
 export const defaultMembers: Member[] = [
-  { name: 'Janghee Hong', role: 'PhD Student', img: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=400" },
+  { name: 'Janghee Hong', role: 'Ph.D.Student', img: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&q=80&w=400" },
   { name: 'Yubin Song', role: 'MS student', img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400" },
   { name: 'Jinho Jeong', role: 'MS student', img: "https://images.unsplash.com/photo-1491528323818-fdd1faba62cc?auto=format&fit=crop&q=80&w=400" },
   { name: 'Hyensu Sim', role: 'MS student', img: "https://images.unsplash.com/photo-1541577141970-eebc83ebe30e?auto=format&fit=crop&q=80&w=400" },
@@ -304,7 +305,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const unsub = onSnapshot(q, (snapshot) => {
       const items: Member[] = [];
       snapshot.forEach((d) => {
-        items.push({ id: d.id, ...d.data() } as Member);
+        const item = { id: d.id, ...d.data() } as Member;
+        if (item.role && (item.role === 'PhD Student' || item.role === 'PhD student' || item.role === 'PHD STUDENT')) {
+          item.role = 'Ph.D.Student';
+        }
+        items.push(item);
       });
       setMembersLocal(items);
       if (items.length > 0) {
@@ -329,7 +334,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const unsub = onSnapshot(q, (snapshot) => {
       const items: Alumni[] = [];
       snapshot.forEach((d) => {
-        items.push({ id: d.id, ...d.data() } as Alumni);
+        const item = { id: d.id, ...d.data() } as Alumni;
+        if (item.name.includes('Seonghan Kim') && (item.company === 'PhD, Lehigh University' || item.company === 'PhD, Lehigh university' || item.company === 'PhD, LEHIGH UNIVERSITY' || item.company === 'Ph.D.Student LEHIGH UNIVERSITY')) {
+          item.company = 'Ph.D.Student LEHIGH UNIVERSITY';
+        }
+        if (item.name.includes('Seungmin Yoon') && (item.company === '(PhD in USA)' || item.company === 'PhD in USA' || item.company === 'Ph.D.Student in USA')) {
+          item.company = 'Ph.D.Student in USA';
+        }
+        if (item.name.includes('Youhyun Nam') && (item.company === '(PhD in USA)' || item.company === 'PhD in USA' || item.company === 'Ph.D.Student in USA')) {
+          item.company = 'Ph.D.Student in USA';
+        }
+        items.push(item);
       });
       setAlumniLocal(items);
       if (items.length > 0) {
@@ -416,18 +431,39 @@ export function DataProvider({ children }: { children: ReactNode }) {
         items.push({ id: d.id, ...d.data() } as Publication);
       });
       
+      // Override/normalize retrieved documents to match local defaultPublications by title matching
+      const mergedItems = items.map((item) => {
+        const matchingDef = defaultPublications.find(
+          def => def.title.toLowerCase().trim() === item.title.toLowerCase().trim()
+        );
+        if (matchingDef) {
+          return {
+            ...item,
+            numericId: matchingDef.id,
+            year: matchingDef.year,
+            authors: matchingDef.authors,
+            journal: matchingDef.journal,
+            details: matchingDef.details || item.details,
+            tags: matchingDef.tags || item.tags
+          };
+        }
+        return item;
+      });
+
       // Sort within years by numericId if it exists, otherwise by Firestore ID
-      items.sort((a, b) => {
+      mergedItems.sort((a, b) => {
         if (b.year !== a.year) return b.year - a.year;
-        if (b.numericId !== undefined && a.numericId !== undefined) {
-           return b.numericId - a.numericId;
+        const aNum = a.numericId !== undefined ? a.numericId : Number(a.id);
+        const bNum = b.numericId !== undefined ? b.numericId : Number(b.id);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return bNum - aNum;
         }
         return b.id.localeCompare(a.id);
       });
 
-      setPublicationsLocal(items);
-      if (items.length > 0) {
-        safeSetItem('lab_publications', JSON.stringify(items));
+      setPublicationsLocal(mergedItems);
+      if (mergedItems.length > 0) {
+        safeSetItem('lab_publications', JSON.stringify(mergedItems));
       }
       setIsInitialLoadDone(prev => ({ ...prev, publications: true }));
     }, (err) => {
@@ -881,6 +917,149 @@ export function DataProvider({ children }: { children: ReactNode }) {
       seed();
     }
   }, [user, loading]);
+
+  // Migrate ID 102/103/104 publications in Firestore automatically exactly once per session when logged in as admin
+  const migrationRunRef = React.useRef(false);
+
+  useEffect(() => {
+    if (isInitialLoadDone.publications && publications.length > 0 && !migrationRunRef.current && user) {
+      const email = user.email || '';
+      const isAdminUser = email === 'admin_v4@cmml.com' || 
+                          email === 'admin@cmml.lab' || 
+                          email === 'eslehoon7@gmail.com' || 
+                          email.endsWith('@cmml.com');
+
+      if (!isAdminUser) {
+        return;
+      }
+      
+      migrationRunRef.current = true;
+      
+      const runCleanMigration = async () => {
+        try {
+          console.log('Running robust Admin publications reconciliation/migration...');
+          
+          const target2026Title = "Evaluating In-Context Learning in Large Language Models for Molecular Property Regression".toLowerCase().trim();
+          const target2025MorphTitle = "MORPHOLOGICAL CHANGES OF ORGANIC PHOTOVOLTAICS: MOLECULAR DYNAMICS SIMULATION STUDIES".toLowerCase().trim();
+          const target2025MethylTitle = "Identification of methylated cytidines using terahertz spectroscopy".toLowerCase().trim();
+
+          const batch = writeBatch(db);
+          let needsCommit = false;
+
+          // Helper clean checks: delete any existing doc if its ID does not match the correct target ID for that title
+          publications.forEach(p => {
+            const titleLow = p.title.toLowerCase().trim();
+            if (titleLow === target2026Title && p.id !== '103') {
+              console.log(`Deleting incorrect doc ${p.id} for 2026 paper`);
+              batch.delete(doc(db, 'publications', p.id));
+              needsCommit = true;
+            }
+            if (titleLow === target2025MorphTitle && p.id !== '102') {
+              console.log(`Deleting incorrect doc ${p.id} for 2025 Morph paper`);
+              batch.delete(doc(db, 'publications', p.id));
+              needsCommit = true;
+            }
+            if (titleLow === target2025MethylTitle && p.id !== '101') {
+              console.log(`Deleting incorrect doc ${p.id} for 2025 Methyl paper`);
+              batch.delete(doc(db, 'publications', p.id));
+              needsCommit = true;
+            }
+          });
+
+          // Write 103: 2026 paper
+          const docRef103 = doc(db, 'publications', '103');
+          batch.set(docRef103, {
+            authors: "C. Y. Joe, K. Song, and R. Chang",
+            title: "Evaluating In-Context Learning in Large Language Models for Molecular Property Regression",
+            journal: "Journal of Computational Chemistry",
+            year: 2026,
+            details: "47, e70308",
+            tags: ["LLM", "Molecular Modeling"],
+            numericId: 103
+          });
+
+          // Write 102: MORPHOLOGICAL CHANGES...
+          const docRef102 = doc(db, 'publications', '102');
+          batch.set(docRef102, {
+            authors: "J. Na and R. Chang",
+            title: "MORPHOLOGICAL CHANGES OF ORGANIC PHOTOVOLTAICS: MOLECULAR DYNAMICS SIMULATION STUDIES",
+            journal: "Journal of Materials Chemistry A (expected)",
+            year: 2025,
+            tags: ["MD", "OPV"],
+            numericId: 102
+          });
+
+          // Write 101: Identification of methylated...
+          const docRef101 = doc(db, 'publications', '101');
+          batch.set(docRef101, {
+            authors: "J. Hong and R. Chang",
+            title: "Identification of methylated cytidines using terahertz spectroscopy",
+            journal: "Bulletin of the Korean Chemical Society",
+            year: 2025,
+            details: "2025",
+            tags: ["Spectroscopy"],
+            numericId: 101
+          });
+
+          // Clean legacy ID '104' doc if exists
+          if (publications.some(p => p.id === '104')) {
+            batch.delete(doc(db, 'publications', '104'));
+          }
+
+          needsCommit = true;
+
+          if (needsCommit) {
+            await batch.commit();
+            console.log('Successfully completed publications reconciliation/migration in Firestore!');
+          }
+
+          // Also check members and migrate any "PhD Student" to "Ph.D.Student" in Firestore
+          members.forEach(async (m) => {
+            if (m.name === 'Janghee Hong' && (m.role === 'PhD Student' || m.role === 'PhD student' || m.role === 'PHD STUDENT' || m.role === 'Ph.D. Student')) {
+              try {
+                console.log('Updating member Janghee Hong role in Firestore to Ph.D.Student');
+                await updateDoc(doc(db, 'members', m.id), { role: 'Ph.D.Student' });
+              } catch (memberErr) {
+                console.warn('Error updating member role in Firestore:', memberErr);
+              }
+            }
+          });
+
+          // Also check alumni and migrate any "PhD, Lehigh University" to "Ph.D.Student LEHIGH UNIVERSITY" in Firestore
+          alumni.forEach(async (a) => {
+            if (a.name.includes('Seonghan Kim') && (a.company === 'PhD, Lehigh University' || a.company === 'PhD, Lehigh university' || a.company === 'PhD, LEHIGH UNIVERSITY')) {
+              try {
+                console.log('Updating alumni Seonghan Kim company in Firestore to Ph.D.Student LEHIGH UNIVERSITY');
+                await updateDoc(doc(db, 'alumni', a.id), { company: 'Ph.D.Student LEHIGH UNIVERSITY' });
+              } catch (alumniErr) {
+                console.warn('Error updating alumni company in Firestore:', alumniErr);
+              }
+            }
+            if (a.name.includes('Seungmin Yoon') && (a.company === '(PhD in USA)' || a.company === 'PhD in USA')) {
+              try {
+                console.log('Updating alumni Seungmin Yoon company in Firestore to Ph.D.Student in USA');
+                await updateDoc(doc(db, 'alumni', a.id), { company: 'Ph.D.Student in USA' });
+              } catch (alumniErr) {
+                console.warn('Error updating alumni company in Firestore:', alumniErr);
+              }
+            }
+            if (a.name.includes('Youhyun Nam') && (a.company === '(PhD in USA)' || a.company === 'PhD in USA')) {
+              try {
+                console.log('Updating alumni Youhyun Nam company in Firestore to Ph.D.Student in USA');
+                await updateDoc(doc(db, 'alumni', a.id), { company: 'Ph.D.Student in USA' });
+              } catch (alumniErr) {
+                console.warn('Error updating alumni company in Firestore:', alumniErr);
+              }
+            }
+          });
+        } catch (err) {
+          console.warn('Error during Admin publications reconciliation:', err);
+        }
+      };
+
+      runCleanMigration();
+    }
+  }, [publications, isInitialLoadDone.publications, alumni, isInitialLoadDone.alumni, user]);
 
   return (
     <DataContext.Provider value={{ 

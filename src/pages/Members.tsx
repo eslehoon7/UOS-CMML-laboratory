@@ -81,7 +81,7 @@ export default function Members() {
               <h2 className="text-4xl font-serif mb-1">{professor.name}</h2>
               <div className="text-[12px] tracking-widest text-brand-muted mb-12 uppercase leading-relaxed">
                 <p>{professor.affiliation}</p>
-                <p>{professor.email}</p>
+                <p className="lowercase">{professor.email}</p>
               </div>
 
               <div className="space-y-12">
@@ -160,7 +160,7 @@ export default function Members() {
                      )}
                   </div>
                   <h4 className="text-[13px] font-medium font-sans tracking-[0.02em]">{m.name}</h4>
-                  <p className="text-[11px] font-sans text-brand-muted mt-1 opacity-40 uppercase tracking-wider">{m.role}</p>
+                  <p className="text-[11px] font-sans text-brand-muted mt-1 opacity-40 tracking-wider font-semibold">{m.role}</p>
                 </div>
               ))}
            </div>
@@ -201,7 +201,7 @@ export default function Members() {
                   {a.name.replace(/[()]/g, '')}
                 </h4>
                 {a.company && (
-                  <p className="text-[11px] font-sans text-brand-muted mt-1 leading-tight opacity-40 uppercase tracking-wider">{a.company.replace(/[()]/g, '')}</p>
+                  <p className="text-[11px] font-sans text-brand-muted mt-1 leading-tight opacity-40 tracking-wider font-semibold">{a.company.replace(/[()]/g, '')}</p>
                 )}
               </div>
             ))}

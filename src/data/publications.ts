@@ -15,7 +15,7 @@ export interface Publication {
 
 export const publications: Publication[] = [
   {
-    id: 101,
+    id: 103,
     authors: "C. Y. Joe, K. Song, and R. Chang",
     title: "Evaluating In-Context Learning in Large Language Models for Molecular Property Regression",
     journal: "Journal of Computational Chemistry",
@@ -24,7 +24,7 @@ export const publications: Publication[] = [
     tags: ["LLM", "Molecular Modeling"]
   },
   {
-    id: 103,
+    id: 102,
     authors: "J. Na and R. Chang",
     title: "MORPHOLOGICAL CHANGES OF ORGANIC PHOTOVOLTAICS: MOLECULAR DYNAMICS SIMULATION STUDIES",
     journal: "Journal of Materials Chemistry A (expected)",
@@ -32,7 +32,7 @@ export const publications: Publication[] = [
     tags: ["MD", "OPV"]
   },
   {
-    id: 102,
+    id: 101,
     authors: "J. Hong and R. Chang",
     title: "Identification of methylated cytidines using terahertz spectroscopy",
     journal: "Bulletin of the Korean Chemical Society",
