@@ -69,9 +69,7 @@ export default function Home() {
             </p>
 
             <p className="max-w-2xl text-brand-paper/70 font-light leading-relaxed mb-16 text-lg tracking-tight">
-              We explore the physical and biological world through the lens of computation 
-              — employing Molecular Dynamics, Monte Carlo, and Brownian Dynamics simulations 
-              to reveal phenomena invisible to experiment alone.
+              We explore the physical and chemical world through the lens of computation — combining Density Functional Theory (DFT), Molecular Dynamics (MD), and Machine Learning Interatomic Potentials (MLIPs) to predict material properties and uncover phenomena beyond the reach of experiment.
             </p>
 
             <div className="flex flex-wrap gap-6">

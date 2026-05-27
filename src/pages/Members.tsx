@@ -139,7 +139,7 @@ export default function Members() {
                        <img 
                         src={m.img} 
                         alt={m.name} 
-                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+                        className={`w-full h-full ${['Jinho Jeong', 'Hyensu Sim', 'Janghee Hong', 'Yubin Song', 'Unho Park'].includes(m.name) ? 'object-cover object-top' : 'object-cover'} transition-all duration-500 group-hover:scale-105`}
                         referrerPolicy="no-referrer"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
