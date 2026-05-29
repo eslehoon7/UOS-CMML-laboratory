@@ -6,10 +6,10 @@
 import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData, defaultSiteSettings } from '../context/DataContext';
 
 export default function Home() {
-  const { professor, research, siteSettings } = useData();
+  const { professor, research, siteSettings, isInitialLoadDone } = useData();
   
   // Use first 6 research items for the grid if available
   const displayProjects = research.length > 0 ? research.slice(0, 6) : [
@@ -27,18 +27,23 @@ export default function Home() {
     ? siteSettings.homeHeroImg.replace(/q=\d+/, 'q=100').replace(/w=\d+/, 'w=3840')
     : siteSettings.homeHeroImg;
 
+  const isDefaultHero = siteSettings.homeHeroImg === defaultSiteSettings.homeHeroImg;
+  const shouldShowHeroImg = !isDefaultHero || isInitialLoadDone.appearance;
+
   return (
     <div>
       {/* Hero Section */}
       <section className="min-h-[85vh] flex flex-col justify-center relative px-6 md:px-20 overflow-hidden text-white">
         <div className="absolute inset-0 z-0">
-          <img 
-            src={heroImgUrl} 
-            alt="Chemistry Research" 
-            className="w-full h-full object-cover will-change-transform"
-            style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', transform: 'translate3d(0,0,0)' }}
-            referrerPolicy="no-referrer"
-          />
+          {shouldShowHeroImg && (
+            <img 
+              src={heroImgUrl} 
+              alt="Chemistry Research" 
+              className="w-full h-full object-cover will-change-transform"
+              style={{ imageRendering: 'auto', WebkitBackfaceVisibility: 'hidden', transform: 'translate3d(0,0,0)' }}
+              referrerPolicy="no-referrer"
+            />
+          )}
           {/* Darker overlays to improve text readability as requested */}
           <div className="absolute inset-0 bg-brand-ink/50" />
           <div className="absolute inset-0 bg-gradient-to-r from-brand-ink/90 via-brand-ink/40 to-transparent" />

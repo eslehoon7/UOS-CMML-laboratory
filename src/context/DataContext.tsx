@@ -241,7 +241,7 @@ export const defaultProfessor: ProfessorData = {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-const defaultSiteSettings: SiteSettings = {
+export const defaultSiteSettings: SiteSettings = {
   homeHeroImg: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&q=80&w=2670",
   homeIntroImg: "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=1000",
   photosHeroImg: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=2670",
@@ -249,13 +249,62 @@ const defaultSiteSettings: SiteSettings = {
 };
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [members, setMembersLocal] = useState<Member[]>([]);
-  const [professor, setProfessorLocal] = useState<ProfessorData>(defaultProfessor);
-  const [alumni, setAlumniLocal] = useState<Alumni[]>([]);
-  const [research, setResearchLocal] = useState<ResearchItem[]>([]);
-  const [gallery, setGalleryLocal] = useState<GalleryImage[]>([]);
-  const [publications, setPublicationsLocal] = useState<Publication[]>([]);
-  const [siteSettings, setSiteSettingsLocal] = useState<SiteSettings>(defaultSiteSettings);
+  const [members, setMembersLocal] = useState<Member[]>(() => {
+    try {
+      const saved = localStorage.getItem('lab_members');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [professor, setProfessorLocal] = useState<ProfessorData>(() => {
+    try {
+      const saved = localStorage.getItem('lab_professor');
+      return saved ? JSON.parse(saved) : defaultProfessor;
+    } catch {
+      return defaultProfessor;
+    }
+  });
+  const [alumni, setAlumniLocal] = useState<Alumni[]>(() => {
+    try {
+      const saved = localStorage.getItem('lab_alumni');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [research, setResearchLocal] = useState<ResearchItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('lab_research');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [gallery, setGalleryLocal] = useState<GalleryImage[]>(() => {
+    try {
+      const saved = localStorage.getItem('lab_gallery');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [publications, setPublicationsLocal] = useState<Publication[]>(() => {
+    try {
+      const saved = localStorage.getItem('lab_publications');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [siteSettings, setSiteSettingsLocal] = useState<SiteSettings>(() => {
+    try {
+      const saved = localStorage.getItem('site_appearance');
+      return saved ? JSON.parse(saved) : defaultSiteSettings;
+    } catch {
+      return defaultSiteSettings;
+    }
+  });
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
