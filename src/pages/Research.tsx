@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { parseItalicText, parseFormattedText } from '../lib/textUtils';
 
 export default function Research() {
   const { research, siteSettings } = useData();
@@ -35,16 +36,31 @@ export default function Research() {
           >
             <div className="flex items-center gap-4 mb-8 h-6">
               <div className="h-[1px] w-12 bg-brand-gold" />
-              <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold leading-none pb-[1px]">Research Areas</span>
+              <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold leading-none pb-[1px]">
+                {parseFormattedText(siteSettings.researchHeroSub ?? "Research Areas")}
+              </span>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-serif leading-tight mb-8 font-medium tracking-tight">
-              Exploring the <span className="text-brand-gold italic font-normal">Molecular</span> Frontier
+              {siteSettings.researchHeroTitle ? (
+                siteSettings.researchHeroTitle.includes("Molecular") ? (
+                  <>
+                    {parseFormattedText(siteSettings.researchHeroTitle.split("Molecular")[0])}
+                    <span className="text-brand-gold italic font-normal">Molecular</span>
+                    {parseFormattedText(siteSettings.researchHeroTitle.split("Molecular")[1])}
+                  </>
+                ) : (
+                  parseFormattedText(siteSettings.researchHeroTitle)
+                )
+              ) : (
+                <>
+                  Exploring the <span className="text-brand-gold italic font-normal">Molecular</span> Frontier
+                </>
+              )}
             </h1>
 
             <p className="max-w-2xl text-brand-paper/60 font-light leading-relaxed text-lg tracking-tight">
-              We employ high-performance computing to reveal the underlying physics 
-              of complex biological systems and advanced materials.
+              {parseFormattedText(siteSettings.researchHeroDesc ?? "We employ high-performance computing to reveal the underlying physics of complex biological systems and advanced materials.")}
             </p>
           </motion.div>
         </div>

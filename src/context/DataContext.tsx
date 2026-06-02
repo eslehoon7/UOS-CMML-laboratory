@@ -25,6 +25,8 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { publications as defaultPublications } from '../data/publications';
 import { ResearchItem, RESEARCH_DATA } from '../data/researchData';
 
+let hasMigrationRunGlobal = false;
+
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -108,6 +110,28 @@ export interface SiteSettings {
   homeIntroImg: string;
   photosHeroImg: string;
   researchHeroImg: string;
+
+  homeHeroSub?: string;
+  homeHeroTitle1?: string;
+  homeHeroTitle2?: string;
+  homeHeroTitle3?: string;
+  homeHeroDesc?: string;
+
+  homeAboutSub?: string;
+  homeAboutTitleLine1?: string;
+  homeAboutTitleLine2?: string;
+  homeAboutDesc1?: string;
+  homeAboutDesc2?: string;
+  homeAboutDesc3?: string;
+  homeAboutDesc4?: string;
+
+  photosHeroSub?: string;
+  photosHeroTitle?: string;
+  photosHeroDesc?: string;
+
+  researchHeroSub?: string;
+  researchHeroTitle?: string;
+  researchHeroDesc?: string;
 }
 
 export interface InfoItem {
@@ -139,6 +163,7 @@ export interface GalleryImage {
   year?: number;
   month?: number;
   createdAt: string;
+  order?: number;
 }
 
 export interface Publication {
@@ -245,7 +270,29 @@ export const defaultSiteSettings: SiteSettings = {
   homeHeroImg: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&q=80&w=2670",
   homeIntroImg: "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=1000",
   photosHeroImg: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=2670",
-  researchHeroImg: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=2670"
+  researchHeroImg: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=2670",
+
+  homeHeroSub: "University of Seoul · Applied Chemistry",
+  homeHeroTitle1: "Computational",
+  homeHeroTitle2: "Molecular",
+  homeHeroTitle3: "Modeling Lab",
+  homeHeroDesc: "We explore the physical and chemical world through the lens of computation — combining Density Functional Theory (DFT), Molecular Dynamics (MD), and Machine Learning Interatomic Potentials (MLIPs) to predict material properties and uncover phenomena beyond the reach of experiment.",
+
+  homeAboutSub: "About LaB",
+  homeAboutTitleLine1: "Understanding Nature",
+  homeAboutTitleLine2: "Through Simulation",
+  homeAboutDesc1: "Welcome to the Computational Molecular Modeling Laboratory, supervised by Prof. Rakwoo Chang in the Department of Applied Chemistry, University of Seoul, Republic of Korea.",
+  homeAboutDesc2: "Our laboratory investigates chemical, physical, biological, and materials phenomena using computer-based molecular modeling and simulation approaches. We employ a broad range of computational techniques, including Density Functional Theory (DFT), Molecular Dynamics (MD) simulations, Machine-Learning Interatomic Potentials (MLIP), and AI-based property prediction.",
+  homeAboutDesc3: "Our research aims to understand molecular mechanisms, predict physicochemical properties, and design functional materials by connecting atomic-scale structures with macroscopic behavior. Current research topics include catalytic and energy materials, biomolecular self-assembly, biological membrane systems, machine-learning-assisted molecular simulations, and data-driven prediction of chemical properties.",
+  homeAboutDesc4: "Through these studies, we seek to provide molecular-level insight into complex systems and develop computational strategies for materials discovery, environmental chemistry, and biological applications.",
+
+  photosHeroSub: "CMML · GALLERY",
+  photosHeroTitle: "Lab Gallery",
+  photosHeroDesc: "Moments from our laboratory — research, conferences, outings and celebrations.",
+
+  researchHeroSub: "Research Areas",
+  researchHeroTitle: "Exploring the Molecular Frontier",
+  researchHeroDesc: "We employ high-performance computing to reveal the underlying physics of complex biological systems and advanced materials."
 };
 
 export function DataProvider({ children }: { children: ReactNode }) {
@@ -448,11 +495,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Gallery Listener
   useEffect(() => {
-    const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'gallery'));
     const unsub = onSnapshot(q, (snapshot) => {
       const items: GalleryImage[] = [];
       snapshot.forEach((d) => {
         items.push({ id: d.id, ...d.data() } as GalleryImage);
+      });
+      items.sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+          return a.order - b.order;
+        }
+        if (a.order !== undefined) return -1;
+        if (b.order !== undefined) return 1;
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       });
       setGalleryLocal(items);
       if (items.length > 0) {
@@ -712,11 +767,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      const updatedWithIds = newGallery.map((g) => {
+      const updatedWithIds = newGallery.map((g, index) => {
         const docRef = g.id ? doc(db, 'gallery', g.id) : doc(collection(db, 'gallery'));
         const photoData: any = {
           url: g.url,
-          createdAt: g.createdAt || new Date().toISOString()
+          createdAt: g.createdAt || new Date().toISOString(),
+          order: index
         };
         if (g.year) photoData.year = g.year;
         if (g.month) photoData.month = g.month;
@@ -971,7 +1027,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const migrationRunRef = React.useRef(false);
 
   useEffect(() => {
-    if (isInitialLoadDone.publications && publications.length > 0 && !migrationRunRef.current && user) {
+    if (hasMigrationRunGlobal) return;
+    if (
+      isInitialLoadDone.publications && 
+      isInitialLoadDone.members && 
+      isInitialLoadDone.alumni && 
+      publications.length > 0 && 
+      !migrationRunRef.current && 
+      user
+    ) {
       const email = user.email || '';
       const isAdminUser = email === 'admin_v4@cmml.com' || 
                           email === 'admin@cmml.lab' || 
@@ -983,6 +1047,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       
       migrationRunRef.current = true;
+      hasMigrationRunGlobal = true;
       
       const runCleanMigration = async () => {
         try {
@@ -1016,8 +1081,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
           });
 
           // Write 103: 2026 paper
-          const docRef103 = doc(db, 'publications', '103');
-          batch.set(docRef103, {
+          const existing103 = publications.find(p => p.id === '103');
+          const data103 = {
             authors: "C. Y. Joe, K. Song, and R. Chang",
             title: "Evaluating In-Context Learning in Large Language Models for Molecular Property Regression",
             journal: "Journal of Computational Chemistry",
@@ -1025,22 +1090,43 @@ export function DataProvider({ children }: { children: ReactNode }) {
             details: "47, e70308",
             tags: ["LLM", "Molecular Modeling"],
             numericId: 103
-          });
+          };
+          if (!existing103 || 
+              existing103.authors !== data103.authors ||
+              existing103.title !== data103.title ||
+              existing103.journal !== data103.journal ||
+              Number(existing103.year) !== Number(data103.year) ||
+              existing103.details !== data103.details) {
+            console.log("Adding Set for publication 103 to batch...");
+            const docRef103 = doc(db, 'publications', '103');
+            batch.set(docRef103, data103);
+            needsCommit = true;
+          }
 
           // Write 102: MORPHOLOGICAL CHANGES...
-          const docRef102 = doc(db, 'publications', '102');
-          batch.set(docRef102, {
+          const existing102 = publications.find(p => p.id === '102');
+          const data102 = {
             authors: "J. Na and R. Chang",
             title: "MORPHOLOGICAL CHANGES OF ORGANIC PHOTOVOLTAICS: MOLECULAR DYNAMICS SIMULATION STUDIES",
             journal: "Journal of Materials Chemistry A (expected)",
             year: 2025,
             tags: ["MD", "OPV"],
             numericId: 102
-          });
+          };
+          if (!existing102 ||
+              existing102.authors !== data102.authors ||
+              existing102.title !== data102.title ||
+              existing102.journal !== data102.journal ||
+              Number(existing102.year) !== Number(data102.year)) {
+            console.log("Adding Set for publication 102 to batch...");
+            const docRef102 = doc(db, 'publications', '102');
+            batch.set(docRef102, data102);
+            needsCommit = true;
+          }
 
           // Write 101: Identification of methylated...
-          const docRef101 = doc(db, 'publications', '101');
-          batch.set(docRef101, {
+          const existing101 = publications.find(p => p.id === '101');
+          const data101 = {
             authors: "J. Hong and R. Chang",
             title: "Identification of methylated cytidines using terahertz spectroscopy",
             journal: "Bulletin of the Korean Chemical Society",
@@ -1048,59 +1134,71 @@ export function DataProvider({ children }: { children: ReactNode }) {
             details: "2025",
             tags: ["Spectroscopy"],
             numericId: 101
-          });
+          };
+          if (!existing101 ||
+              existing101.authors !== data101.authors ||
+              existing101.title !== data101.title ||
+              existing101.journal !== data101.journal ||
+              Number(existing101.year) !== Number(data101.year) ||
+              existing101.details !== data101.details) {
+            console.log("Adding Set for publication 101 to batch...");
+            const docRef101 = doc(db, 'publications', '101');
+            batch.set(docRef101, data101);
+            needsCommit = true;
+          }
 
           // Clean legacy ID '104' doc if exists
           if (publications.some(p => p.id === '104')) {
             batch.delete(doc(db, 'publications', '104'));
+            needsCommit = true;
           }
-
-          needsCommit = true;
 
           if (needsCommit) {
             await batch.commit();
             console.log('Successfully completed publications reconciliation/migration in Firestore!');
           }
 
-          // Also check members and migrate any "PhD Student" to "Ph.D.Student" in Firestore
-          members.forEach(async (m) => {
-            if (m.name === 'Janghee Hong' && (m.role === 'PhD Student' || m.role === 'PhD student' || m.role === 'PHD STUDENT' || m.role === 'Ph.D. Student')) {
-              try {
-                console.log('Updating member Janghee Hong role in Firestore to Ph.D.Student');
-                await updateDoc(doc(db, 'members', m.id), { role: 'Ph.D.Student' });
-              } catch (memberErr) {
-                console.warn('Error updating member role in Firestore:', memberErr);
+          // Also check members and migrate any "PhD Student" to "Ph.D.Student" in Firestore by querying raw Firestore
+          for (const m of members) {
+            const docRef = doc(db, 'members', m.id);
+            try {
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (m.name === 'Janghee Hong' && (data.role === 'PhD Student' || data.role === 'PhD student' || data.role === 'PHD STUDENT' || data.role === 'Ph.D. Student')) {
+                  console.log('Updating member Janghee Hong role in Firestore to Ph.D.Student');
+                  await updateDoc(docRef, { role: 'Ph.D.Student' });
+                }
               }
+            } catch (memberSnapErr) {
+              console.warn('Error reading/updating member:', memberSnapErr);
             }
-          });
+          }
 
-          // Also check alumni and migrate any "PhD, Lehigh University" to "Ph.D.Student LEHIGH UNIVERSITY" in Firestore
-          alumni.forEach(async (a) => {
-            if (a.name.includes('Seonghan Kim') && (a.company === 'PhD, Lehigh University' || a.company === 'PhD, Lehigh university' || a.company === 'PhD, LEHIGH UNIVERSITY')) {
-              try {
-                console.log('Updating alumni Seonghan Kim company in Firestore to Ph.D.Student LEHIGH UNIVERSITY');
-                await updateDoc(doc(db, 'alumni', a.id), { company: 'Ph.D.Student LEHIGH UNIVERSITY' });
-              } catch (alumniErr) {
-                console.warn('Error updating alumni company in Firestore:', alumniErr);
+          // Also check alumni and migrate in Firestore by querying raw Firestore
+          for (const a of alumni) {
+            const docRef = doc(db, 'alumni', a.id);
+            try {
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (a.name.includes('Seonghan Kim') && (data.company === 'PhD, Lehigh University' || data.company === 'PhD, Lehigh university' || data.company === 'PhD, LEHIGH UNIVERSITY')) {
+                  console.log('Updating alumni Seonghan Kim company in Firestore to Ph.D.Student LEHIGH UNIVERSITY');
+                  await updateDoc(docRef, { company: 'Ph.D.Student LEHIGH UNIVERSITY' });
+                }
+                if (a.name.includes('Seungmin Yoon') && (data.company === '(PhD in USA)' || data.company === 'PhD in USA')) {
+                  console.log('Updating alumni Seungmin Yoon company in Firestore to Ph.D.Student in USA');
+                  await updateDoc(docRef, { company: 'Ph.D.Student in USA' });
+                }
+                if (a.name.includes('Youhyun Nam') && (data.company === '(PhD in USA)' || data.company === 'PhD in USA')) {
+                  console.log('Updating alumni Youhyun Nam company in Firestore to Ph.D.Student in USA');
+                  await updateDoc(docRef, { company: 'Ph.D.Student in USA' });
+                }
               }
+            } catch (alumniSnapErr) {
+              console.warn('Error reading/updating alumni:', alumniSnapErr);
             }
-            if (a.name.includes('Seungmin Yoon') && (a.company === '(PhD in USA)' || a.company === 'PhD in USA')) {
-              try {
-                console.log('Updating alumni Seungmin Yoon company in Firestore to Ph.D.Student in USA');
-                await updateDoc(doc(db, 'alumni', a.id), { company: 'Ph.D.Student in USA' });
-              } catch (alumniErr) {
-                console.warn('Error updating alumni company in Firestore:', alumniErr);
-              }
-            }
-            if (a.name.includes('Youhyun Nam') && (a.company === '(PhD in USA)' || a.company === 'PhD in USA')) {
-              try {
-                console.log('Updating alumni Youhyun Nam company in Firestore to Ph.D.Student in USA');
-                await updateDoc(doc(db, 'alumni', a.id), { company: 'Ph.D.Student in USA' });
-              } catch (alumniErr) {
-                console.warn('Error updating alumni company in Firestore:', alumniErr);
-              }
-            }
-          });
+          }
         } catch (err) {
           console.warn('Error during Admin publications reconciliation:', err);
         }
@@ -1108,7 +1206,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       runCleanMigration();
     }
-  }, [publications, isInitialLoadDone.publications, alumni, isInitialLoadDone.alumni, user]);
+  }, [
+    publications, 
+    isInitialLoadDone.publications, 
+    members,
+    isInitialLoadDone.members,
+    alumni, 
+    isInitialLoadDone.alumni, 
+    user
+  ]);
 
   return (
     <DataContext.Provider value={{ 

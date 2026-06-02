@@ -7,6 +7,7 @@ import { motion } from 'motion/react';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useData, defaultSiteSettings } from '../context/DataContext';
+import { parseItalicText, parseFormattedText } from '../lib/textUtils';
 
 export default function Home() {
   const { professor, research, siteSettings, isInitialLoadDone } = useData();
@@ -60,21 +61,23 @@ export default function Home() {
           >
             <div className="flex items-center gap-4 mb-10 h-6">
               <div className="h-[1px] w-12 bg-brand-gold" />
-              <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold leading-none pb-[1px]">University of Seoul · Applied Chemistry</span>
+              <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold leading-none pb-[1px]">
+                {parseFormattedText(siteSettings.homeHeroSub ?? "University of Seoul · Applied Chemistry")}
+              </span>
             </div>
 
             <h1 className="text-5xl md:text-[70px] lg:text-[90px] font-serif leading-[0.95] mb-10 font-medium tracking-tight">
-              Computational <br />
-              <span className="text-brand-gold italic font-normal">Molecular</span> <br />
-              Modeling Lab
+              {parseFormattedText(siteSettings.homeHeroTitle1 ?? "Computational")} <br />
+              <span className="text-brand-gold italic font-normal">{parseFormattedText(siteSettings.homeHeroTitle2 ?? "Molecular")}</span> <br />
+              {parseFormattedText(siteSettings.homeHeroTitle3 ?? "Modeling Lab")}
             </h1>
 
             <p className="text-[12px] font-bold tracking-[0.4em] mb-14 opacity-60 uppercase text-brand-paper/50">
-              Computational Molecular Modeling Lab, University of Seoul
+              {(siteSettings.homeHeroTitle1 ?? "Computational") + " " + (siteSettings.homeHeroTitle2 ?? "Molecular") + " " + (siteSettings.homeHeroTitle3 ?? "Modeling Lab")}, University of Seoul
             </p>
 
             <p className="max-w-2xl text-brand-paper/70 font-light leading-relaxed mb-16 text-lg tracking-tight">
-              We explore the physical and chemical world through the lens of computation — combining Density Functional Theory (DFT), Molecular Dynamics (MD), and Machine Learning Interatomic Potentials (MLIPs) to predict material properties and uncover phenomena beyond the reach of experiment.
+              {parseFormattedText(siteSettings.homeHeroDesc ?? "We explore the physical and chemical world through the lens of computation — combining Density Functional Theory (DFT), Molecular Dynamics (MD), and Machine Learning Interatomic Potentials (MLIPs) to predict material properties and uncover phenomena beyond the reach of experiment.")}
             </p>
 
             <div className="flex flex-wrap gap-6">
@@ -143,30 +146,65 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-3 mb-6">
                    <div className="h-[1px] w-8 bg-brand-gold" />
-                   <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold">About LaB</span>
+                   <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold">
+                     {parseFormattedText(siteSettings.homeAboutSub ?? "About LaB")}
+                   </span>
                 </div>
                 <h2 className="text-5xl md:text-6xl font-serif leading-tight text-brand-ink">
-                  Understanding Nature <br /> <span className="italic font-normal text-brand-gold/80">Through Simulation</span>
+                  {parseFormattedText(siteSettings.homeAboutTitleLine1 ?? "Understanding Nature")} <br /> <span className="italic font-normal text-brand-gold/80">{parseFormattedText(siteSettings.homeAboutTitleLine2 ?? "Through Simulation")}</span>
                 </h2>
               </div>
               
               <div className="space-y-8">
                 <p className="text-xl text-brand-ink/90 font-light leading-relaxed max-w-2xl">
-                  Welcome to the <strong className="font-bold">Computational Molecular Modeling Laboratory</strong>, supervised by <strong className="font-bold">Prof. Rakwoo Chang</strong> in the <strong className="font-bold">Department of Applied Chemistry</strong>, <strong className="font-bold">University of Seoul</strong>, <strong className="font-bold">Republic of Korea</strong>.
+                  {siteSettings.homeAboutDesc1 ? parseFormattedText(siteSettings.homeAboutDesc1) : (
+                    <>
+                      Welcome to the <strong className="font-bold">Computational Molecular Modeling Laboratory</strong>, supervised by <strong className="font-bold">Prof. Rakwoo Chang</strong> in the <strong className="font-bold">Department of Applied Chemistry</strong>, <strong className="font-bold">University of Seoul</strong>, <strong className="font-bold">Republic of Korea</strong>.
+                    </>
+                  )}
                 </p>
 
                 <div className="space-y-4 text-[13px] leading-relaxed text-brand-muted font-normal border-l-2 border-brand-gold/30 pl-6 max-w-2xl">
-                  <p>
-                    Our laboratory investigates chemical, physical, biological, and materials phenomena using computer-based molecular modeling and simulation approaches. We employ a broad range of computational techniques, including <strong className="font-medium text-brand-ink">Density Functional Theory (DFT)</strong>, <strong className="font-medium text-brand-ink">Molecular Dynamics (MD) simulations</strong>, <strong className="font-medium text-brand-ink">Machine-Learning Interatomic Potentials (MLIP)</strong>, and <strong className="font-medium text-brand-ink">AI-based property prediction</strong>.
-                  </p>
-                  <p>
-                    Our research aims to understand molecular mechanisms, predict physicochemical properties, and design functional materials by connecting atomic-scale structures with macroscopic behavior. Current research topics include <strong className="font-medium text-brand-ink">catalytic and energy materials</strong>, <strong className="font-medium text-brand-ink">biomolecular self-assembly</strong>, <strong className="font-medium text-brand-ink">biological membrane systems</strong>, <strong className="font-medium text-brand-ink">machine-learning-assisted molecular simulations</strong>, and <strong className="font-medium text-brand-ink">data-driven prediction of chemical properties</strong>.
-                  </p>
-                  <p>
-                    Through these studies, we seek to provide molecular-level insight into complex systems and develop computational strategies for materials discovery, environmental chemistry, and biological applications.
-                  </p>
+                  {(() => {
+                    const desc2 = siteSettings.homeAboutDesc2;
+                    const desc3 = siteSettings.homeAboutDesc3;
+                    const desc4 = siteSettings.homeAboutDesc4;
+
+                    // If desc2 has newlines or is the only one set
+                    if (desc2 && (desc2.includes('\n') || (!desc3 && !desc4))) {
+                      return desc2.split('\n').filter(p => p.trim() !== '').map((para, idx) => (
+                        <p key={idx}>{parseFormattedText(para)}</p>
+                      ));
+                    }
+
+                    // Otherwise if we have individual paragraphs saved from old version
+                    if (desc2 || desc3 || desc4) {
+                      return (
+                        <>
+                          {desc2 && <p>{parseFormattedText(desc2)}</p>}
+                          {desc3 && <p>{parseFormattedText(desc3)}</p>}
+                          {desc4 && <p>{parseFormattedText(desc4)}</p>}
+                        </>
+                      );
+                    }
+
+                    // Strict Fallback / default representation
+                    return (
+                      <>
+                        <p>
+                          Our laboratory investigates chemical, physical, biological, and materials phenomena using computer-based molecular modeling and simulation approaches. We employ a broad range of computational techniques, including Density Functional Theory (DFT), Molecular Dynamics (MD) simulations, Machine-Learning Interatomic Potentials (MLIP), and AI-based property prediction.
+                        </p>
+                        <p>
+                          Our research aims to understand molecular mechanisms, predict physicochemical properties, and design functional materials by connecting atomic-scale structures with macroscopic behavior. Current research topics include catalytic and energy materials, biomolecular self-assembly, biological membrane systems, machine-learning-assisted molecular simulations, and data-driven prediction of chemical properties.
+                        </p>
+                        <p>
+                          Through these studies, we seek to provide molecular-level insight into complex systems and develop computational strategies for materials discovery, environmental chemistry, and biological applications.
+                        </p>
+                      </>
+                    );
+                  })()}
                   <p className="pt-2">
-                    If you have any questions, please contact <strong className="font-medium text-brand-ink">rchang90@uos.ac.kr</strong>.
+                    If you have any questions, please contact <strong className="font-medium text-brand-ink">{professor.email || "rchang90@uos.ac.kr"}</strong>.
                   </p>
                 </div>
               </div>

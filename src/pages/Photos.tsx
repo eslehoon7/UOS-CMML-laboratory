@@ -5,6 +5,7 @@
 
 import { motion } from 'motion/react';
 import { useData } from '../context/DataContext';
+import { parseItalicText, parseFormattedText } from '../lib/textUtils';
 
 export default function Photos() {
   const { gallery, siteSettings } = useData();
@@ -34,16 +35,30 @@ export default function Photos() {
           >
             <div className="flex items-center gap-4 mb-10 h-6">
               <div className="h-[1px] w-12 bg-brand-gold" />
-              <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold leading-none pb-[1px]">CMML · GALLERY</span>
+              <span className="text-[12px] font-bold tracking-[0.4em] uppercase text-brand-gold leading-none pb-[1px]">
+                {parseFormattedText(siteSettings.photosHeroSub ?? "CMML · GALLERY")}
+              </span>
             </div>
 
             <h1 className="text-6xl md:text-8xl font-serif leading-[1.1] mb-10 font-medium tracking-tight">
-              Lab <span className="text-brand-gold italic font-normal">Gallery</span>
+              {siteSettings.photosHeroTitle ? (
+                siteSettings.photosHeroTitle.includes("Gallery") ? (
+                  <>
+                    {parseFormattedText(siteSettings.photosHeroTitle.replace("Gallery", "").trim())}{" "}
+                    <span className="text-brand-gold italic font-normal">Gallery</span>
+                  </>
+                ) : (
+                  parseFormattedText(siteSettings.photosHeroTitle)
+                )
+              ) : (
+                <>
+                  Lab <span className="text-brand-gold italic font-normal">Gallery</span>
+                </>
+              )}
             </h1>
 
             <p className="max-w-2xl text-brand-paper/70 font-light leading-relaxed text-lg md:text-xl tracking-tight">
-              Moments from our laboratory — research, conferences, 
-              outings and celebrations.
+              {parseFormattedText(siteSettings.photosHeroDesc ?? "Moments from our laboratory — research, conferences, outings and celebrations.")}
             </p>
           </motion.div>
         </div>

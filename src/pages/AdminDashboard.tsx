@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, FormEvent, useRef, ChangeEvent, useEffect } from 'react';
+import React, { useState, FormEvent, useRef, ChangeEvent, useEffect } from 'react';
 import { 
   PlusSquare, 
   Edit3, 
@@ -14,7 +14,8 @@ import {
   X,
   Plus,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  GripVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -65,70 +66,101 @@ export default function AdminDashboard() {
     settings: false
   });
 
+  const hasScrubbedRef = useRef(false);
+
   // SCRUBBER: Detect and fix oversized images in local state
   useEffect(() => {
+    if (hasScrubbedRef.current) return;
+
     const scrubData = async () => {
-      let changed = false;
+      hasScrubbedRef.current = true;
       const MAX_BASE64_LENGTH = 1000000; // ~750KB
       const SETTINGS_IMAGE_LIMIT = 200000; // ~150KB per image for settings specifically (4 images total = ~800KB)
 
       // Scrub Members
+      let membersChanged = false;
       const scrubbedMembers = await Promise.all(localMembers.map(async (m) => {
         if (m.img && m.img.startsWith('data:image') && m.img.length > MAX_BASE64_LENGTH) {
           const compressed = await compressBase64(m.img, 800, 800, 0.7);
-          changed = true;
-          return { ...m, img: compressed };
+          if (compressed !== m.img) {
+            membersChanged = true;
+            return { ...m, img: compressed };
+          }
         }
         return m;
       }));
 
       // Scrub Alumni
+      let alumniChanged = false;
       const scrubbedAlumni = await Promise.all(localAlumni.map(async (a) => {
         if (a.img && a.img.startsWith('data:image') && a.img.length > MAX_BASE64_LENGTH) {
           const compressed = await compressBase64(a.img, 800, 800, 0.7);
-          changed = true;
-          return { ...a, img: compressed };
+          if (compressed !== a.img) {
+            alumniChanged = true;
+            return { ...a, img: compressed };
+          }
         }
         return a;
       }));
       
       // Scrub Professor
+      let professorChanged = false;
       let scrubbedProfessor = localProfessor;
       if (localProfessor.img && localProfessor.img.startsWith('data:image') && localProfessor.img.length > MAX_BASE64_LENGTH) {
         const compressed = await compressBase64(localProfessor.img, 800, 800, 0.6);
-        scrubbedProfessor = { ...localProfessor, img: compressed };
-        changed = true;
+        if (compressed !== localProfessor.img) {
+          scrubbedProfessor = { ...localProfessor, img: compressed };
+          professorChanged = true;
+        }
       }
 
       // Scrub Research
+      let researchChanged = false;
       const scrubbedResearch = await Promise.all(localResearch.map(async (r) => {
         if (r.imageUrl && r.imageUrl.startsWith('data:image') && r.imageUrl.length > MAX_BASE64_LENGTH) {
           const compressed = await compressBase64(r.imageUrl, 800, 800, 0.6);
-          changed = true;
-          return { ...r, imageUrl: compressed };
+          if (compressed !== r.imageUrl) {
+            researchChanged = true;
+            return { ...r, imageUrl: compressed };
+          }
         }
         return r;
       }));
 
       // Scrub Settings - CRITICAL for 1MB document limit
+      let settingsChanged = false;
       let scrubbedSettings = localSiteSettings;
       const settingKeys: (keyof SiteSettings)[] = ['homeHeroImg', 'homeIntroImg', 'photosHeroImg', 'researchHeroImg'];
       for (const key of settingKeys) {
         if (localSiteSettings[key] && localSiteSettings[key].startsWith('data:image') && localSiteSettings[key].length > SETTINGS_IMAGE_LIMIT) {
           // Drastically reduce site settings images because they are bundled together
           const compressed = await compressBase64(localSiteSettings[key], 600, 600, 0.4);
-          scrubbedSettings = { ...scrubbedSettings, [key]: compressed };
-          changed = true;
+          if (compressed !== localSiteSettings[key]) {
+            scrubbedSettings = { ...scrubbedSettings, [key]: compressed };
+            settingsChanged = true;
+          }
         }
       }
 
-      if (changed) {
+      if (membersChanged) {
         setLocalMembers(scrubbedMembers);
+        setIsDirty(prev => ({ ...prev, members: true }));
+      }
+      if (alumniChanged) {
         setLocalAlumni(scrubbedAlumni);
+        setIsDirty(prev => ({ ...prev, alumni: true }));
+      }
+      if (professorChanged) {
         setLocalProfessor(scrubbedProfessor);
+        setIsDirty(prev => ({ ...prev, professor: true }));
+      }
+      if (researchChanged) {
         setLocalResearch(scrubbedResearch);
+        setIsDirty(prev => ({ ...prev, research: true }));
+      }
+      if (settingsChanged) {
         setLocalSiteSettings(scrubbedSettings);
-        setIsDirty(prev => ({ ...prev, members: true, alumni: true, professor: true, research: true, settings: true }));
+        setIsDirty(prev => ({ ...prev, settings: true }));
       }
     };
 
@@ -366,6 +398,46 @@ export default function AdminDashboard() {
 
   const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
   const [showEditPhotoModal, setShowEditPhotoModal] = useState(false);
+
+  const [draggedPhotoIdx, setDraggedPhotoIdx] = useState<number | null>(null);
+  const [dragOverPhotoIdx, setDragOverPhotoIdx] = useState<number | null>(null);
+
+  const handlePhotoDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedPhotoIdx(index);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handlePhotoDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedPhotoIdx === null || draggedPhotoIdx === index) return;
+    setDragOverPhotoIdx(index);
+  };
+
+  const handlePhotoDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedPhotoIdx === null || draggedPhotoIdx === targetIndex) {
+      setDraggedPhotoIdx(null);
+      setDragOverPhotoIdx(null);
+      return;
+    }
+
+    const reorderedGallery = [...gallery];
+    // Swap the dragged photo index directly with the target index so other photos don't shift
+    const temp = reorderedGallery[draggedPhotoIdx];
+    reorderedGallery[draggedPhotoIdx] = reorderedGallery[targetIndex];
+    reorderedGallery[targetIndex] = temp;
+
+    // Call setGallery to persist the new order in database
+    await setGallery(reorderedGallery);
+
+    setDraggedPhotoIdx(null);
+    setDragOverPhotoIdx(null);
+  };
+
+  const handlePhotoDragEnd = () => {
+    setDraggedPhotoIdx(null);
+    setDragOverPhotoIdx(null);
+  };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -1404,7 +1476,7 @@ export default function AdminDashboard() {
             <header className="flex justify-between items-end mb-12">
               <div>
                 <h2 className="text-xl font-serif font-bold tracking-tight mb-2">PHOTOS GALLERY</h2>
-                <p className="text-[12px] text-brand-muted opacity-60">Manage lab activities and photo albums.</p>
+                <p className="text-[12px] text-brand-muted opacity-60">Manage lab activities, photo albums, and drag elements to reorder them.</p>
               </div>
               
               <div className="flex items-center gap-6">
@@ -1430,19 +1502,49 @@ export default function AdminDashboard() {
                     <p className="font-serif italic font-medium">No photos uploaded yet.</p>
                   </motion.div>
                 ) : (
-                  gallery.map((photo, i) => (
-                    <motion.div 
-                      key={photo.id || i}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-                      className="group relative aspect-square bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 shadow-sm hover:shadow-xl transition-all duration-500"
-                    >
+                  gallery.map((photo, i) => {
+                    let shiftClass = "";
+                    if (draggedPhotoIdx !== null && dragOverPhotoIdx !== null) {
+                      if (i === dragOverPhotoIdx) {
+                        // Only shift the target photo slightly aside to indicate a swapping action
+                        if (draggedPhotoIdx < dragOverPhotoIdx) {
+                          shiftClass = "-translate-x-4 -rotate-1 scale-95 shadow-md border-brand-gold";
+                        } else {
+                          shiftClass = "translate-x-4 rotate-1 scale-95 shadow-md border-brand-gold";
+                        }
+                      }
+                    }
+
+                    return (
+                      <motion.div 
+                        key={photo.id || i}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+                        draggable
+                        onDragStart={(e) => handlePhotoDragStart(e, i)}
+                        onDragOver={(e) => handlePhotoDragOver(e, i)}
+                        onDrop={(e) => handlePhotoDrop(e, i)}
+                        onDragEnd={handlePhotoDragEnd}
+                        className={`group relative aspect-square bg-[#f9f9f9] rounded-3xl overflow-hidden border transition-all duration-300 cursor-grab active:cursor-grabbing ${
+                          draggedPhotoIdx === i 
+                            ? 'opacity-40 scale-95 border-brand-gold border-2 shadow-inner' 
+                            : dragOverPhotoIdx === i
+                              ? 'border-brand-gold border-2 scale-105 shadow-lg'
+                              : 'border-brand-ink/5 shadow-sm hover:shadow-xl'
+                        } ${shiftClass}`}
+                      >
+                      {/* Drag Grip Handle Overlay */}
+                      <div className="absolute top-3 left-3 z-10 w-7 h-7 bg-black/40 text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <GripVertical className="w-3.5 h-3.5 text-white" />
+                      </div>
+
                       <img 
                         src={photo.url} 
                         alt={`Lab photo ${photo.year}-${photo.month}`} 
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        draggable={false}
                       />
                       
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -1467,7 +1569,8 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                     </motion.div>
-                  ))
+                  );
+                })
                 )}
               </AnimatePresence>
             </div>
@@ -1742,94 +1845,391 @@ export default function AdminDashboard() {
                   </button>
                 </div>
 
-                {/* Home Hero Image */}
-                <div className="space-y-4">
-                <h3 className="text-sm font-bold tracking-widest uppercase opacity-40">Home Hero Background</h3>
-                <div 
-                  onClick={() => settingsHomeHeroRef.current?.click()}
-                  className="aspect-[21/9] bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center"
-                >
-                  <img src={localSiteSettings.homeHeroImg} alt="Home Hero" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Plus className="w-12 h-12 text-white" />
+                {/* formatting tip helper */}
+                <div className="p-6 bg-brand-gold/10 border border-brand-gold/25 rounded-2xl flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-brand-gold">✨ 실시간 텍스트 스타일링 팁</h4>
+                    <p className="text-[12px] opacity-80 leading-relaxed font-light text-brand-ink/90">
+                      모든 텍스트 필드에서 이탤릭체로 표기할 단어는 <strong className="font-semibold text-brand-gold">*별표*</strong>로 감싸주시고, 
+                      다른 폰트와 멋진 전용 골드 강조색상으로 보여주고 싶은 핵심 단어는 <strong className="font-semibold text-brand-gold">"큰따옴표"</strong>로 감싸주세요!
+                    </p>
                   </div>
-                  <input 
-                    type="file" 
-                    ref={settingsHomeHeroRef} 
-                    onChange={(e) => handleSettingsImageUpload(e, 'homeHeroImg')} 
-                    className="hidden" 
-                    accept="image/*"
-                  />
-                </div>
-              </div>
-
-              {/* Home Intro Image */}
-              <div className="grid grid-cols-2 gap-12">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold tracking-widest uppercase opacity-40">Home Intro Image</h3>
-                  <div 
-                    onClick={() => settingsHomeIntroRef.current?.click()}
-                    className="aspect-square bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center p-4"
-                  >
-                    <img 
-                      src={localSiteSettings.homeIntroImg} 
-                      alt="Home Intro" 
-                      className="w-full h-full object-contain" 
-                      style={{ imageRendering: 'auto' }}
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Plus className="w-12 h-12 text-white" />
-                    </div>
-                    <input 
-                      type="file" 
-                      ref={settingsHomeIntroRef} 
-                      onChange={(e) => handleSettingsImageUpload(e, 'homeIntroImg')} 
-                      className="hidden" 
-                      accept="image/*"
-                    />
+                  <div className="flex gap-2 shrink-0 text-brand-ink/90">
+                    <span className="text-[10px] bg-brand-gold/10 text-brand-gold border border-brand-gold/20 px-2 py-1 rounded-md font-mono">예: *About* "LaB"</span>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold tracking-widest uppercase opacity-40">Photos Hero Background</h3>
-                  <div 
-                    onClick={() => settingsPhotosHeroRef.current?.click()}
-                    className="aspect-video bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center"
-                  >
-                    <img src={localSiteSettings.photosHeroImg} alt="Photos Hero" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Plus className="w-12 h-12 text-white" />
+                {/* 1. HOME HERO SETTINGS */}
+                <div className="p-8 bg-brand-paper rounded-3xl border border-brand-ink/5 space-y-6">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-brand-ink border-b border-brand-ink/5 pb-3">1. Home Page Hero</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Background Image</label>
+                      <div 
+                        onClick={() => settingsHomeHeroRef.current?.click()}
+                        className="aspect-[21/9] bg-[#f9f9f9] rounded-2xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center"
+                      >
+                        <img src={localSiteSettings.homeHeroImg} alt="Home Hero" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Plus className="w-10 h-10 text-white" />
+                        </div>
+                        <input 
+                          type="file" 
+                          ref={settingsHomeHeroRef} 
+                          onChange={(e) => handleSettingsImageUpload(e, 'homeHeroImg')} 
+                          className="hidden" 
+                          accept="image/*"
+                        />
+                      </div>
                     </div>
-                    <input 
-                      type="file" 
-                      ref={settingsPhotosHeroRef} 
-                      onChange={(e) => handleSettingsImageUpload(e, 'photosHeroImg')} 
-                      className="hidden" 
-                      accept="image/*"
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 flex justify-between items-center">
+                          <span>Subtitle / Label</span>
+                          <span className="text-[9px] font-normal text-brand-gold/80 normal-case">*이탤릭* / "강조" 설정 가능</span>
+                        </label>
+                        <input 
+                          type="text"
+                          value={localSiteSettings.homeHeroSub ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({...localSiteSettings, homeHeroSub: e.target.value});
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                          placeholder="University of Seoul · Applied Chemistry"
+                        />
+                        <p className="text-[10px] text-brand-muted/60 font-light mt-0.5">이탤릭은 *별표*로, 골드색 강조는 "큰따옴표"로 감싸 입력하세요. (예: UOS · "Applied Chemistry")</p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Heading Line 1</label>
+                          <input 
+                            type="text"
+                            value={localSiteSettings.homeHeroTitle1 ?? ""}
+                            onChange={(e) => {
+                              setLocalSiteSettings({...localSiteSettings, homeHeroTitle1: e.target.value});
+                              setIsDirty(prev => ({ ...prev, settings: true }));
+                            }}
+                            className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                            placeholder="Computational"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Heading Line 2 (Italic)</label>
+                          <input 
+                            type="text"
+                            value={localSiteSettings.homeHeroTitle2 ?? ""}
+                            onChange={(e) => {
+                              setLocalSiteSettings({...localSiteSettings, homeHeroTitle2: e.target.value});
+                              setIsDirty(prev => ({ ...prev, settings: true }));
+                            }}
+                            className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                            placeholder="Molecular"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Heading Line 3</label>
+                          <input 
+                            type="text"
+                            value={localSiteSettings.homeHeroTitle3 ?? ""}
+                            onChange={(e) => {
+                              setLocalSiteSettings({...localSiteSettings, homeHeroTitle3: e.target.value});
+                              setIsDirty(prev => ({ ...prev, settings: true }));
+                            }}
+                            className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                            placeholder="Modeling Lab"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Hero Description Paragraph</label>
+                    <textarea 
+                      value={localSiteSettings.homeHeroDesc ?? ""}
+                      onChange={(e) => {
+                        setLocalSiteSettings({...localSiteSettings, homeHeroDesc: e.target.value});
+                        setIsDirty(prev => ({ ...prev, settings: true }));
+                      }}
+                      className="w-full border border-brand-ink/10 rounded-xl p-3 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light h-20 resize-y"
+                      placeholder="Enter heroic statement explaining laboratory operations in DFT/MD/MLIP simulations..."
                     />
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-sm font-bold tracking-widest uppercase opacity-40">Research Hero Background</h3>
-                  <div 
-                    onClick={() => settingsResearchHeroRef.current?.click()}
-                    className="aspect-video bg-[#f9f9f9] rounded-3xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center"
-                  >
-                    <img src={localSiteSettings.researchHeroImg} alt="Research Hero" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Plus className="w-12 h-12 text-white" />
+                {/* 2. HOME ABOUT SETTINGS */}
+                <div className="p-8 bg-brand-paper rounded-3xl border border-brand-ink/5 space-y-6">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-brand-ink border-b border-brand-ink/5 pb-3">2. Home Page About / Introduction</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Introduction Left Side Image</label>
+                      <div 
+                        onClick={() => settingsHomeIntroRef.current?.click()}
+                        className="aspect-square bg-[#f9f9f9] rounded-2xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center p-4 max-w-[280px]"
+                      >
+                        <img 
+                          src={localSiteSettings.homeIntroImg} 
+                          alt="Home Intro" 
+                          className="w-full h-full object-contain" 
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Plus className="w-10 h-10 text-white" />
+                        </div>
+                        <input 
+                          type="file" 
+                          ref={settingsHomeIntroRef} 
+                          onChange={(e) => handleSettingsImageUpload(e, 'homeIntroImg')} 
+                          className="hidden" 
+                          accept="image/*"
+                        />
+                      </div>
                     </div>
-                    <input 
-                      type="file" 
-                      ref={settingsResearchHeroRef} 
-                      onChange={(e) => handleSettingsImageUpload(e, 'researchHeroImg')} 
-                      className="hidden" 
-                      accept="image/*"
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 flex justify-between items-center">
+                          <span>Subtitle / Label</span>
+                          <span className="text-[9px] font-normal text-brand-gold/80 normal-case">*이탤릭* / "강조" 설정 가능</span>
+                        </label>
+                        <input 
+                          type="text"
+                          value={localSiteSettings.homeAboutSub ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({...localSiteSettings, homeAboutSub: e.target.value});
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                          placeholder="About LaB"
+                        />
+                        <p className="text-[10px] text-brand-muted/60 font-light mt-0.5">이탤릭은 *별표*로, 골드색 강조는 "큰따옴표"로 감싸 입력하세요. (예: About "LaB")</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Title Line 1</label>
+                          <input 
+                            type="text"
+                            value={localSiteSettings.homeAboutTitleLine1 ?? ""}
+                            onChange={(e) => {
+                              setLocalSiteSettings({...localSiteSettings, homeAboutTitleLine1: e.target.value});
+                              setIsDirty(prev => ({ ...prev, settings: true }));
+                            }}
+                            className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                            placeholder="Understanding Nature"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Title Line 2 (Italic)</label>
+                          <input 
+                            type="text"
+                            value={localSiteSettings.homeAboutTitleLine2 ?? ""}
+                            onChange={(e) => {
+                              setLocalSiteSettings({...localSiteSettings, homeAboutTitleLine2: e.target.value});
+                              setIsDirty(prev => ({ ...prev, settings: true }));
+                            }}
+                            className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                            placeholder="Through Simulation"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    <label className="text-[11px] font-bold uppercase tracking-widest opacity-50 block font-bold">Introduction Paragraphs (소개 글 관리)</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 bg-[#faf9f6]/40 p-5 rounded-2xl border border-brand-ink/5">
+                        <span className="text-[11px] font-bold text-brand-gold uppercase block">Welcome Statement (홈페이지 중간 Welcome 문구)</span>
+                        <textarea 
+                          value={localSiteSettings.homeAboutDesc1 ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({...localSiteSettings, homeAboutDesc1: e.target.value});
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border border-brand-ink/15 shadow-sm rounded-xl p-3.5 focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all bg-white text-[13px] font-light h-40 resize-y"
+                          placeholder="Welcome to the Computational Molecular Modeling Laboratory..."
+                        />
+                        <p className="text-[11px] text-brand-muted/70 leading-relaxed font-light">
+                          홈페이지 중앙의 "Welcome to..."로 시작하는 큰 글씨의 핵심 인삿말 문장입니다.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2 bg-[#faf9f6]/40 p-5 rounded-2xl border border-brand-ink/5">
+                        <span className="text-[11px] font-bold text-brand-gold uppercase block">Sidebar Details Description (금색 선 옆 상세 설명글)</span>
+                        <textarea 
+                          value={localSiteSettings.homeAboutDesc2 ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({
+                              ...localSiteSettings, 
+                              homeAboutDesc2: e.target.value,
+                              homeAboutDesc3: "",
+                              homeAboutDesc4: ""
+                            });
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border border-brand-ink/15 shadow-sm rounded-xl p-3.5 focus:border-brand-gold focus:ring-1 focus:ring-brand-gold outline-none transition-all bg-white text-[13px] font-light h-40 resize-y"
+                          placeholder="Our laboratory investigates chemical, physical...&#10;&#10;여러 문단으로 구성하려면 Enter 키를 입력해 줄바꿈을 구분해 주세요."
+                        />
+                        <p className="text-[11px] text-brand-muted/70 leading-relaxed font-light">
+                          금색 세로선 옆에 들어가는 세부 연구 내용과 설명 글자들입니다. <strong>줄바꿈(Enter)</strong>을 입력하면 자동으로 여러 개의 문단으로 나뉘어 표시됩니다.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. GALLERY / PHOTOS HERO SETTINGS */}
+                <div className="p-8 bg-brand-paper rounded-3xl border border-brand-ink/5 space-y-6">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-brand-ink border-b border-brand-ink/5 pb-3">3. Gallery Page</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Hero Background Image</label>
+                      <div 
+                        onClick={() => settingsPhotosHeroRef.current?.click()}
+                        className="aspect-[21/9] bg-[#f9f9f9] rounded-2xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center font-bold"
+                      >
+                        <img src={localSiteSettings.photosHeroImg} alt="Photos Hero" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Plus className="w-10 h-10 text-white" />
+                        </div>
+                        <input 
+                          type="file" 
+                          ref={settingsPhotosHeroRef} 
+                          onChange={(e) => handleSettingsImageUpload(e, 'photosHeroImg')} 
+                          className="hidden" 
+                          accept="image/*"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 flex justify-between items-center font-bold">
+                          <span>Subtitle / Label</span>
+                          <span className="text-[9px] font-normal text-brand-gold/80 normal-case">*이탤릭* / "강조" 설정 가능</span>
+                        </label>
+                        <input 
+                          type="text"
+                          value={localSiteSettings.photosHeroSub ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({...localSiteSettings, photosHeroSub: e.target.value});
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                          placeholder="CMML · GALLERY"
+                        />
+                        <p className="text-[10px] text-brand-muted/60 font-light mt-0.5">이탤릭은 *별표*로, 골드색 강조는 "큰따옴표"로 감싸 입력하세요. (예: CMML · "Gallery")</p>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Hero Title</label>
+                        <input 
+                          type="text"
+                          value={localSiteSettings.photosHeroTitle ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({...localSiteSettings, photosHeroTitle: e.target.value});
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                          placeholder="Lab Gallery"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Gallery Hero Description</label>
+                    <textarea 
+                      value={localSiteSettings.photosHeroDesc ?? ""}
+                      onChange={(e) => {
+                        setLocalSiteSettings({...localSiteSettings, photosHeroDesc: e.target.value});
+                        setIsDirty(prev => ({ ...prev, settings: true }));
+                      }}
+                      className="w-full border border-brand-ink/10 rounded-xl p-3 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light h-20 resize-y"
+                      placeholder="Moments from our laboratory — research, conferences, outings and celebrations."
                     />
                   </div>
                 </div>
-              </div>
+
+                {/* 4. RESEARCH HERO SETTINGS */}
+                <div className="p-8 bg-brand-paper rounded-3xl border border-brand-ink/5 space-y-6">
+                  <h3 className="text-sm font-bold tracking-widest uppercase text-brand-ink border-b border-brand-ink/5 pb-3">4. Research Page</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Hero Background Image</label>
+                      <div 
+                        onClick={() => settingsResearchHeroRef.current?.click()}
+                        className="aspect-[21/9] bg-[#f9f9f9] rounded-2xl overflow-hidden border border-brand-ink/5 cursor-pointer relative group flex items-center justify-center font-bold"
+                      >
+                        <img src={localSiteSettings.researchHeroImg} alt="Research Hero" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Plus className="w-10 h-10 text-white" />
+                        </div>
+                        <input 
+                          type="file" 
+                          ref={settingsResearchHeroRef} 
+                          onChange={(e) => handleSettingsImageUpload(e, 'researchHeroImg')} 
+                          className="hidden" 
+                          accept="image/*"
+                        />
+                      </div>
+                    </div>
+
+                      <div className="space-y-4 font-bold">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 flex justify-between items-center font-bold">
+                            <span>Subtitle / Label</span>
+                            <span className="text-[9px] font-normal text-brand-gold/80 normal-case">*이탤릭* / "강조" 설정 가능</span>
+                          </label>
+                          <input 
+                            type="text"
+                            value={localSiteSettings.researchHeroSub ?? ""}
+                            onChange={(e) => {
+                              setLocalSiteSettings({...localSiteSettings, researchHeroSub: e.target.value});
+                              setIsDirty(prev => ({ ...prev, settings: true }));
+                            }}
+                            className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                            placeholder="Research Areas"
+                          />
+                          <p className="text-[10px] text-brand-muted/60 font-light mt-0.5">이탤릭은 *별표*로, 골드색 강조는 "큰따옴표"로 감싸 입력하세요. (예: "Research" Areas)</p>
+                        </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 font-bold">Hero Title (includes 'Molecular' for italic styling)</label>
+                        <input 
+                          type="text"
+                          value={localSiteSettings.researchHeroTitle ?? ""}
+                          onChange={(e) => {
+                            setLocalSiteSettings({...localSiteSettings, researchHeroTitle: e.target.value});
+                            setIsDirty(prev => ({ ...prev, settings: true }));
+                          }}
+                          className="w-full border-b border-brand-ink/25 py-1 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light"
+                          placeholder="Exploring the Molecular Frontier"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block font-bold">Research Hero Description</label>
+                    <textarea 
+                      value={localSiteSettings.researchHeroDesc ?? ""}
+                      onChange={(e) => {
+                        setLocalSiteSettings({...localSiteSettings, researchHeroDesc: e.target.value});
+                        setIsDirty(prev => ({ ...prev, settings: true }));
+                      }}
+                      className="w-full border border-brand-ink/10 rounded-xl p-3 focus:border-brand-gold outline-none transition-colors bg-transparent text-[13px] font-light h-20 resize-y"
+                      placeholder="We employ high-performance computing to reveal the underlying physics of complex biological systems and advanced materials."
+                    />
+                  </div>
+                </div>
             </div>
 
             <div className="bg-brand-paper p-8 rounded-3xl border border-brand-ink/5">
