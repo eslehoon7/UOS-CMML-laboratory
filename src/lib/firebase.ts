@@ -3,7 +3,7 @@ import {
   getAuth, 
   signOut, 
   signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword 
+  createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -16,41 +16,35 @@ export const auth = getAuth(app);
 export const loginWithCmml = async (id: string, pw: string) => {
   const normalizedId = id.trim().toLowerCase();
   const rawPw = pw.trim();
-  const lowerPw = rawPw.toLowerCase();
 
   console.log('Login attempt for ID:', normalizedId);
 
   // Strictly validate designated credentials
-  const isAuthorizedId = normalizedId === 'admin' || normalizedId === 'admin@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
-  const isAuthorizedPw = rawPw === 'admincmml' || lowerPw === 'admincmml';
+  const isAuthorizedId = normalizedId === 'rchang90' || normalizedId === 'rchang90@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
+  const isAuthorizedPw = rawPw === 'theochem90!';
 
   if (isAuthorizedId && isAuthorizedPw) {
     // We use a specific internal email for the Firebase Auth singleton.
-    const internalEmail = 'admin_v4@cmml.com'; 
-    const internalPassword = 'admincmml'; 
+    const internalEmail = 'rchang90_admin@cmml.com'; 
+    const targetPassword = 'theochem90!'; 
     
     try {
       console.log('Attempting Firebase Auth sign-in...');
-      const result = await signInWithEmailAndPassword(auth, internalEmail, internalPassword);
-      console.log('Sign-in successful');
+      const result = await signInWithEmailAndPassword(auth, internalEmail, targetPassword);
+      console.log('Sign-in successful with the new password!');
       return result;
     } catch (error: any) {
-      console.error('Firebase Auth sign-in failed:', error.code, error.message);
+      console.log('Firebase Auth sign-in with target password was not immediate (which is expected on first run):', error.code, error.message);
       
       const errorCode = error.code || '';
-      
-      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential' || errorCode === 'auth/wrong-password') {
         try {
-          console.log('Account not found or invalid credential. Attempting to bootstrap admin account...');
-          const createResult = await createUserWithEmailAndPassword(auth, internalEmail, internalPassword);
-          console.log('Bootstrap successful');
+          console.log('Attempting to bootstrap/create fresh admin account...');
+          const createResult = await createUserWithEmailAndPassword(auth, internalEmail, targetPassword);
+          console.log('Bootstrap successful!');
           return createResult;
         } catch (createError: any) {
-          console.error('Bootstrap failed:', createError.code, createError.message);
-          if (createError.code === 'auth/email-already-in-use') {
-            console.log('Account already exists, retrying login one last time...');
-            return await signInWithEmailAndPassword(auth, internalEmail, internalPassword);
-          }
+          console.error('Final bootstrap attempt failed:', createError.code, createError.message);
           throw createError;
         }
       }

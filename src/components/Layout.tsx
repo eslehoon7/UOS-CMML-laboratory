@@ -148,19 +148,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <h5 className="text-[12px] font-bold tracking-[0.3em] uppercase mb-10 text-brand-gold">Office</h5>
                 <div className="space-y-6 text-[12px] font-light text-white/50 leading-relaxed tracking-wide">
                   <p>
-                    Natural Science Building, R424<br />
-                    163 Seoulsirip-daero, Seoul 02504
+                    Room 318, Natural Science Building,<br />
+                    163 Seoulsiripdae-ro, Dongdaemun-gu,<br />
+                    Seoul, Republic of Korea
                   </p>
                   <p className="pt-4 border-t border-white/5">
-                    <span className="text-brand-gold font-bold">Lab.</span> R213<br />
-                    <span className="text-brand-gold font-bold">Tel.</span> +82 2 6490 2623
+                    <span className="text-brand-gold font-bold">Lab.</span> 503<br />
+                    <span className="text-brand-gold font-bold">Tel.</span> 02 6490 5742
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="mt-32 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
-              <p className="text-[12px] tracking-widest text-white/20 uppercase">© 2026 UOS CMML · ALL RIGHTS RESERVED</p>
+              <p className="text-[12px] tracking-widest text-white/20 uppercase">© UOS CMML · ALL RIGHTS RESERVED</p>
               <div className="flex gap-10">
                 <Link to="/admin" className="text-[12px] font-bold tracking-[0.3em] uppercase text-white/30 hover:text-brand-gold transition-colors">Admin Login</Link>
                 <Link to="#" className="text-[12px] font-bold tracking-[0.3em] uppercase text-white/30 hover:text-brand-gold transition-colors">Privacy</Link>

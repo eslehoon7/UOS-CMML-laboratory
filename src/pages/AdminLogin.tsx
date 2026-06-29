@@ -91,7 +91,7 @@ export default function AdminLogin() {
               ref={idInputRef}
               type="text" 
               value={id}
-              placeholder="admin@cmml.com"
+              placeholder="rchang90"
               onChange={(e) => setId(e.target.value)}
               className="w-full bg-brand-ink/5 border-none rounded-md py-4 px-6 focus:ring-1 focus:ring-brand-gold outline-none transition-all placeholder:text-brand-muted/30"
             />

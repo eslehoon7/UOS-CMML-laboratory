@@ -1037,7 +1037,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       user
     ) {
       const email = user.email || '';
-      const isAdminUser = email === 'admin_v4@cmml.com' || 
+      const isAdminUser = email === 'rchang90@cmml.com' || 
+                          email === 'admin_v4@cmml.com' || 
                           email === 'admin@cmml.lab' || 
                           email === 'eslehoon7@gmail.com' || 
                           email.endsWith('@cmml.com');

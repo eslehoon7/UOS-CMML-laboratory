@@ -14,6 +14,7 @@ service cloud.firestore {
     function isAdmin() {
       // Trust specific emails for admin access in this lab environment
       return isSignedIn() && (
+        request.auth.token.email == 'rchang90@cmml.com' ||
         request.auth.token.email == 'admin_v4@cmml.com' ||
         request.auth.token.email == 'admin@cmml.lab' || 
         request.auth.token.email == 'eslehoon7@gmail.com' ||
