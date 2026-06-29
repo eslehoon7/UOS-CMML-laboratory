@@ -15,7 +15,8 @@ import {
   Plus,
   ArrowUp,
   ArrowDown,
-  GripVertical
+  GripVertical,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -46,6 +47,7 @@ export default function AdminDashboard() {
   const [isCompressing, setIsCompressing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorModal, setErrorModal] = useState<{ isOpen: boolean; title: string; message: string }>({ isOpen: false, title: '', message: '' });
+  const [showSettingsSaved, setShowSettingsSaved] = useState(false);
   
   // Local states for editing
   const [localProfessor, setLocalProfessor] = useState(professor);
@@ -444,10 +446,14 @@ export default function AdminDashboard() {
     try {
       await setSiteSettings(localSiteSettings);
       setIsDirty(prev => ({ ...prev, settings: false }));
-      alert('설정이 성공적으로 저장되었습니다.');
+      setShowSettingsSaved(true);
     } catch (error) {
       console.error("Failed to save settings:", error);
-      alert('설정 저장에 실패했습니다.');
+      setErrorModal({
+        isOpen: true,
+        title: '저장 실패',
+        message: '설정 저장에 실패했습니다.'
+      });
     } finally {
       setIsSaving(false);
     }
@@ -2563,6 +2569,27 @@ export default function AdminDashboard() {
                 Confirm Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Saved Confirmation Modal */}
+      {showSettingsSaved && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-6">
+          <div className="bg-white w-full max-w-sm rounded-[32px] p-10 shadow-2xl border border-brand-ink/5 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-6">
+              <Check className="w-8 h-8 text-green-500" />
+            </div>
+            <h3 className="text-xl font-serif font-bold mb-4 tracking-tight">저장되었습니다</h3>
+            <p className="text-brand-muted font-light leading-relaxed mb-10 text-sm">
+              사이트 설정이 성공적으로 저장되었습니다.
+            </p>
+            <button 
+              onClick={() => setShowSettingsSaved(false)}
+              className="w-full bg-brand-ink text-white py-4 rounded-2xl font-bold tracking-[0.2em] uppercase text-[11px] hover:bg-brand-gold transition-all shadow-xl shadow-brand-ink/10 active:scale-[0.98]"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
