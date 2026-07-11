@@ -584,9 +584,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     const settingsRef = doc(db, 'settings', 'appearance');
-    const unsub = onSnapshot(settingsRef, (docSnap) => {
+    const unsub = onSnapshot(settingsRef, async (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data() as SiteSettings;
+        const mainData = docSnap.data();
+        const data: SiteSettings = {
+          homeHeroImg: mainData.homeHeroImg || '',
+          homeIntroImg: mainData.homeIntroImg || '',
+          photosHeroImg: mainData.photosHeroImg || '',
+          researchHeroImg: mainData.researchHeroImg || '',
+          ...mainData
+        } as SiteSettings;
+
+        // Try to fetch separate image documents if they exist
+        const imgKeys = ['homeHeroImg', 'homeIntroImg', 'photosHeroImg', 'researchHeroImg'] as const;
+        try {
+          const promises = imgKeys.map(async (key) => {
+            const imgSnap = await getDoc(doc(db, 'settings', `appearance_img_${key}`));
+            if (imgSnap.exists()) {
+              const imgData = imgSnap.data();
+              if (imgData && imgData.data) {
+                data[key] = imgData.data;
+              }
+            }
+          });
+          await Promise.all(promises);
+        } catch (imgErr) {
+          console.warn('Failed to load separate site settings images:', imgErr);
+        }
+
         setSiteSettingsLocal(data);
         safeSetItem('site_appearance', JSON.stringify(data));
       }
@@ -848,7 +873,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const setSiteSettings = async (settings: SiteSettings) => {
     try {
-      await setDoc(doc(db, 'settings', 'appearance'), settings);
+      const { homeHeroImg, homeIntroImg, photosHeroImg, researchHeroImg, ...textSettings } = settings;
+      
+      const batch = writeBatch(db);
+      
+      // Save text settings (excluding heavy base64 images)
+      batch.set(doc(db, 'settings', 'appearance'), textSettings);
+      
+      // Save heavy images in separate documents to guarantee we never exceed 1MB document limit
+      batch.set(doc(db, 'settings', 'appearance_img_homeHeroImg'), { data: homeHeroImg || '' });
+      batch.set(doc(db, 'settings', 'appearance_img_homeIntroImg'), { data: homeIntroImg || '' });
+      batch.set(doc(db, 'settings', 'appearance_img_photosHeroImg'), { data: photosHeroImg || '' });
+      batch.set(doc(db, 'settings', 'appearance_img_researchHeroImg'), { data: researchHeroImg || '' });
+      
+      await batch.commit();
+      
       // Optimistic update
       setSiteSettingsLocal(settings);
       safeSetItem('site_appearance', JSON.stringify(settings));

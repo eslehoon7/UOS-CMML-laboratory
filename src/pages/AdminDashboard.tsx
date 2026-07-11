@@ -175,8 +175,8 @@ export default function AdminDashboard() {
     const scrubData = async () => {
       hasScrubbedRef.current = true;
       const MAX_BASE64_LENGTH = 1000000; // ~750KB
-      // Set the limit to ~512KB (approx 680,000 characters in base64) as requested by the user
-      const SETTINGS_IMAGE_LIMIT = 680000; // ~512KB limit
+      // Set the limit to ~750KB (approx 1,000,000 characters in base64) to never touch images uploaded under 500KB
+      const SETTINGS_IMAGE_LIMIT = 1000000; 
 
       // Scrub Members
       let membersChanged = false;
@@ -724,13 +724,24 @@ export default function AdminDashboard() {
     if (file) {
       try {
         setIsSaving(true);
-        // If the file is under 500KB (512,000 bytes), use very high quality compression (0.92) to keep the original 1920x1080 fidelity.
-        // If it's over 500KB, apply standard 0.75 compression to bring the size under 500KB.
-        const quality = file.size <= 500 * 1024 ? 0.92 : 0.75;
-        const compressed = await compressImage(file, 1920, 1080, quality);
+        let base64Result: string;
+        
+        if (file.size <= 500 * 1024) {
+          // If the file is under 500KB, read it as-is to preserve 100% of the original quality and format!
+          base64Result = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = (err) => reject(err);
+          });
+        } else {
+          // Otherwise, compress it using 1920x1080 with 0.75 quality to bring it down under 500KB.
+          base64Result = await compressImage(file, 1920, 1080, 0.75);
+        }
+
         setLocalSiteSettings(prev => {
           setIsDirty(d => ({ ...d, settings: true }));
-          return { ...prev, [key]: compressed };
+          return { ...prev, [key]: base64Result };
         });
       } catch (error) {
         console.error("Settings image upload failed:", error);
