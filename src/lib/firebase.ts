@@ -5,7 +5,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -19,9 +19,33 @@ export const loginWithCmml = async (id: string, pw: string) => {
 
   console.log('Login attempt for ID:', normalizedId);
 
-  // Strictly validate designated credentials
-  const isAuthorizedId = normalizedId === 'rchang90' || normalizedId === 'rchang90@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
-  const isAuthorizedPw = rawPw === 'theochem90!';
+  // Fetch dynamic credentials from Firestore if available
+  let isAuthorizedId = false;
+  let isAuthorizedPw = false;
+
+  try {
+    const credsSnap = await getDoc(doc(db, 'settings', 'admin_credentials'));
+    if (credsSnap.exists()) {
+      const data = credsSnap.data();
+      const storedId = (data.adminId || '').trim().toLowerCase();
+      const storedPw = (data.adminPw || '').trim();
+      
+      if (storedId && storedPw) {
+        isAuthorizedId = normalizedId === storedId;
+        isAuthorizedPw = rawPw === storedPw;
+      } else {
+        isAuthorizedId = normalizedId === 'rchang90' || normalizedId === 'rchang90@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
+        isAuthorizedPw = rawPw === 'theochem90!';
+      }
+    } else {
+      isAuthorizedId = normalizedId === 'rchang90' || normalizedId === 'rchang90@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
+      isAuthorizedPw = rawPw === 'theochem90!';
+    }
+  } catch (err) {
+    console.warn('Failed to read admin_credentials from firestore, using defaults:', err);
+    isAuthorizedId = normalizedId === 'rchang90' || normalizedId === 'rchang90@cmml.com' || normalizedId === 'eslehoon7@gmail.com';
+    isAuthorizedPw = rawPw === 'theochem90!';
+  }
 
   if (isAuthorizedId && isAuthorizedPw) {
     // We use a specific internal email for the Firebase Auth singleton.

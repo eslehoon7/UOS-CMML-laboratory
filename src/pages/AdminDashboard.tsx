@@ -16,10 +16,14 @@ import {
   ArrowUp,
   ArrowDown,
   GripVertical,
-  Check
+  Check,
+  Lock,
+  Unlock,
+  KeyRound
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { 
   useData, 
   SiteSettings, 
@@ -31,7 +35,7 @@ import {
   defaultProfessor
 } from '../context/DataContext';
 import { compressImage, compressBase64 } from '../lib/imageUtils';
-import { logout } from '../lib/firebase';
+import { logout, db } from '../lib/firebase';
 import { ResearchItem } from '../data/researchData';
 
 export default function AdminDashboard() {
@@ -48,6 +52,100 @@ export default function AdminDashboard() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorModal, setErrorModal] = useState<{ isOpen: boolean; title: string; message: string }>({ isOpen: false, title: '', message: '' });
   const [showSettingsSaved, setShowSettingsSaved] = useState(false);
+
+  // Account Change Modal States
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [reauthStep, setReauthStep] = useState<'verify' | 'change'>('verify');
+  const [currentVerifyId, setCurrentVerifyId] = useState('');
+  const [currentVerifyPw, setCurrentVerifyPw] = useState('');
+  const [verifyError, setVerifyError] = useState('');
+  const [newAdminId, setNewAdminId] = useState('');
+  const [newAdminPw, setNewAdminPw] = useState('');
+  const [newAdminPwConfirm, setNewAdminPwConfirm] = useState('');
+  const [fieldsLocked, setFieldsLocked] = useState(true);
+
+  const handleVerifyCredentials = async (e: FormEvent) => {
+    e.preventDefault();
+    setVerifyError('');
+    setIsSaving(true);
+    
+    try {
+      const normalizedInputId = currentVerifyId.trim().toLowerCase();
+      const rawInputPw = currentVerifyPw.trim();
+      
+      let correctId = 'rchang90';
+      let correctPw = 'theochem90!';
+      
+      const credsSnap = await getDoc(doc(db, 'settings', 'admin_credentials'));
+      if (credsSnap.exists()) {
+        const data = credsSnap.data();
+        if (data.adminId && data.adminPw) {
+          correctId = data.adminId.trim().toLowerCase();
+          correctPw = data.adminPw.trim();
+        }
+      }
+      
+      // Support defaults just in case
+      const isDefaultCorrectId = normalizedInputId === 'rchang90' || normalizedInputId === 'rchang90@cmml.com' || normalizedInputId === 'eslehoon7@gmail.com';
+      const isDefaultCorrectPw = rawInputPw === 'theochem90!';
+      
+      const isMatched = (normalizedInputId === correctId && rawInputPw === correctPw) || (isDefaultCorrectId && isDefaultCorrectPw);
+      
+      if (isMatched) {
+        setReauthStep('change');
+        setNewAdminId(correctId);
+        setNewAdminPw('');
+        setNewAdminPwConfirm('');
+        setFieldsLocked(true);
+      } else {
+        setVerifyError('아이디 또는 비밀번호가 일치하지 않습니다.');
+      }
+    } catch (err: any) {
+      console.error('Failed to verify credentials:', err);
+      setVerifyError('검증 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveNewCredentials = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    if (newAdminPw !== newAdminPwConfirm) {
+      return;
+    }
+    
+    if (!newAdminId.trim() || !newAdminPw.trim()) {
+      alert('아이디와 비밀번호를 모두 입력해주세요.');
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      await setDoc(doc(db, 'settings', 'admin_credentials'), {
+        adminId: newAdminId.trim(),
+        adminPw: newAdminPw.trim(),
+        updatedAt: new Date().toISOString()
+      });
+      
+      alert('계정 정보가 성공적으로 변경되었습니다. 다음 로그인부터 새로운 계정 정보가 적용됩니다.');
+      setShowAccountModal(false);
+      // Reset state
+      setReauthStep('verify');
+      setCurrentVerifyId('');
+      setCurrentVerifyPw('');
+      setVerifyError('');
+      setNewAdminId('');
+      setNewAdminPw('');
+      setNewAdminPwConfirm('');
+      setFieldsLocked(true);
+    } catch (err: any) {
+      console.error('Failed to save new credentials:', err);
+      alert('계정 정보 변경에 실패했습니다. 관리자 권한을 확인해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   // Local states for editing
   const [localProfessor, setLocalProfessor] = useState(professor);
@@ -788,7 +886,25 @@ export default function AdminDashboard() {
     <div className="min-h-screen flex bg-white font-sans text-brand-ink">
       {/* ... (Sidebar remains same) ... */}
       <aside className="w-72 bg-[#dfdfdf] flex flex-col pt-12">
-        <Link to="/" className="text-2xl font-serif px-12 mb-20 tracking-widest uppercase">CMML</Link>
+        <Link to="/" className="text-2xl font-serif px-12 mb-10 tracking-widest uppercase">CMML</Link>
+        
+        {/* Change Account Button */}
+        <div className="px-12 mb-10">
+          <button 
+            onClick={() => {
+              setReauthStep('verify');
+              setCurrentVerifyId('');
+              setCurrentVerifyPw('');
+              setVerifyError('');
+              setShowAccountModal(true);
+            }}
+            className="w-full py-3 px-4 bg-brand-ink/5 hover:bg-brand-ink text-brand-ink hover:text-white border border-brand-ink/10 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 active:scale-[0.98]"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>계정변경하기</span>
+          </button>
+        </div>
+
         <nav className="flex-1">
           <button 
             onClick={() => setActiveTab('research')}
@@ -2611,6 +2727,188 @@ export default function AdminDashboard() {
             >
               Confirm
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Account Change Modal */}
+      {showAccountModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-6">
+          <div className="bg-white w-full max-w-md rounded-[32px] p-10 relative shadow-2xl border border-brand-ink/5 animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => {
+                setShowAccountModal(false);
+                // Reset states
+                setReauthStep('verify');
+                setCurrentVerifyId('');
+                setCurrentVerifyPw('');
+                setVerifyError('');
+                setNewAdminId('');
+                setNewAdminPw('');
+                setNewAdminPwConfirm('');
+                setFieldsLocked(true);
+              }}
+              className="absolute top-8 right-8 opacity-40 hover:opacity-100 transition-opacity"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {reauthStep === 'verify' ? (
+              <div>
+                <h3 className="text-2xl font-serif font-bold mb-2 tracking-tight">관리자 본인 인증</h3>
+                <p className="text-brand-muted font-light text-xs mb-8 leading-relaxed">
+                  보안을 위해 현재 관리자 아이디와 비밀번호를 입력해주세요.
+                </p>
+
+                <form onSubmit={handleVerifyCredentials} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+                      현재 아이디 (Current ID)
+                    </label>
+                    <input 
+                      type="text"
+                      required
+                      value={currentVerifyId}
+                      onChange={(e) => setCurrentVerifyId(e.target.value)}
+                      className="w-full border-b border-brand-ink/15 py-2.5 focus:border-brand-gold outline-none transition-colors text-sm font-light bg-transparent"
+                      placeholder="Enter current admin ID"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40">
+                      현재 비밀번호 (Current Password)
+                    </label>
+                    <input 
+                      type="password"
+                      required
+                      value={currentVerifyPw}
+                      onChange={(e) => setCurrentVerifyPw(e.target.value)}
+                      className="w-full border-b border-brand-ink/15 py-2.5 focus:border-brand-gold outline-none transition-colors text-sm font-light bg-transparent"
+                      placeholder="Enter current password"
+                    />
+                  </div>
+
+                  {verifyError && (
+                    <p className="text-red-500 text-xs font-light">{verifyError}</p>
+                  )}
+
+                  <div className="pt-4">
+                    <button 
+                      type="submit"
+                      disabled={isSaving}
+                      className="w-full bg-brand-ink text-white py-4 rounded-2xl font-bold tracking-[0.2em] uppercase text-[11px] hover:bg-brand-gold transition-all shadow-xl shadow-brand-ink/10 active:scale-[0.98]"
+                    >
+                      {isSaving ? '인증 중...' : '인증하기 (Verify)'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <div>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-2xl font-serif font-bold tracking-tight">관리자 계정 변경</h3>
+                  
+                  {/* 변경/잠금 Toggle Button on the Right */}
+                  <button 
+                    type="button"
+                    onClick={() => setFieldsLocked(!fieldsLocked)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-brand-ink/10 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    {fieldsLocked ? (
+                      <>
+                        <Lock className="w-3.5 h-3.5 text-brand-gold" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-brand-gold">변경</span>
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="w-3.5 h-3.5 text-green-600 animate-pulse" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-green-600">잠금 해제됨</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-brand-muted font-light text-xs mb-8 leading-relaxed">
+                  우측의 <strong>변경</strong> 버튼을 눌러 잠금을 해제한 후, 새로운 관리자 로그인 정보를 입력해주세요.
+                </p>
+
+                <form onSubmit={handleSaveNewCredentials} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block">
+                      새로운 아이디 (New ID)
+                    </label>
+                    <input 
+                      type="text"
+                      required
+                      disabled={fieldsLocked}
+                      value={newAdminId}
+                      onChange={(e) => setNewAdminId(e.target.value)}
+                      className={`w-full border-b py-2.5 outline-none transition-colors text-sm font-light bg-transparent ${
+                        fieldsLocked 
+                          ? 'border-brand-ink/5 text-brand-ink/40 cursor-not-allowed' 
+                          : 'border-brand-ink/15 focus:border-brand-gold text-brand-ink'
+                      }`}
+                      placeholder="Enter new admin ID"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block">
+                      새로운 비밀번호 (New Password)
+                    </label>
+                    <input 
+                      type="password"
+                      required
+                      disabled={fieldsLocked}
+                      value={newAdminPw}
+                      onChange={(e) => setNewAdminPw(e.target.value)}
+                      className={`w-full border-b py-2.5 outline-none transition-colors text-sm font-light bg-transparent ${
+                        fieldsLocked 
+                          ? 'border-brand-ink/5 text-brand-ink/40 cursor-not-allowed' 
+                          : 'border-brand-ink/15 focus:border-brand-gold text-brand-ink'
+                      }`}
+                      placeholder="Enter new password"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest opacity-40 block">
+                      새로운 비밀번호 확인 (Confirm Password)
+                    </label>
+                    <input 
+                      type="password"
+                      required
+                      disabled={fieldsLocked}
+                      value={newAdminPwConfirm}
+                      onChange={(e) => setNewAdminPwConfirm(e.target.value)}
+                      className={`w-full border-b py-2.5 outline-none transition-colors text-sm font-light bg-transparent ${
+                        fieldsLocked 
+                          ? 'border-brand-ink/5 text-brand-ink/40 cursor-not-allowed' 
+                          : 'border-brand-ink/15 focus:border-brand-gold text-brand-ink'
+                      }`}
+                      placeholder="Confirm new password"
+                    />
+                    {newAdminPw !== newAdminPwConfirm && newAdminPwConfirm.length > 0 && (
+                      <p className="text-red-500 text-xs mt-1">비밀번호가 서로 일치하지 않습니다.</p>
+                    )}
+                  </div>
+
+                  <div className="pt-4">
+                    <button 
+                      type="submit"
+                      disabled={fieldsLocked || newAdminPw !== newAdminPwConfirm || !newAdminId.trim() || !newAdminPw.trim() || isSaving}
+                      className={`w-full py-4 rounded-2xl font-bold tracking-[0.2em] uppercase text-[11px] transition-all ${
+                        fieldsLocked || newAdminPw !== newAdminPwConfirm || !newAdminId.trim() || !newAdminPw.trim() || isSaving
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-brand-ink text-white hover:bg-brand-gold shadow-xl shadow-brand-ink/10 active:scale-[0.98]'
+                      }`}
+                    >
+                      {isSaving ? '저장 중...' : '계정 정보 저장 (Save)'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
