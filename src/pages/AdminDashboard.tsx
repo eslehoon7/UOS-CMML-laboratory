@@ -175,7 +175,8 @@ export default function AdminDashboard() {
     const scrubData = async () => {
       hasScrubbedRef.current = true;
       const MAX_BASE64_LENGTH = 1000000; // ~750KB
-      const SETTINGS_IMAGE_LIMIT = 200000; // ~150KB per image for settings specifically (4 images total = ~800KB)
+      // Set the limit to ~512KB (approx 680,000 characters in base64) as requested by the user
+      const SETTINGS_IMAGE_LIMIT = 680000; // ~512KB limit
 
       // Scrub Members
       let membersChanged = false;
@@ -233,8 +234,9 @@ export default function AdminDashboard() {
       const settingKeys: (keyof SiteSettings)[] = ['homeHeroImg', 'homeIntroImg', 'photosHeroImg', 'researchHeroImg'];
       for (const key of settingKeys) {
         if (localSiteSettings[key] && localSiteSettings[key].startsWith('data:image') && localSiteSettings[key].length > SETTINGS_IMAGE_LIMIT) {
-          // Drastically reduce site settings images because they are bundled together
-          const compressed = await compressBase64(localSiteSettings[key], 600, 600, 0.4);
+          // If a settings image is larger than 500KB (680,000 characters), compress it while maintaining 1920x1080 resolution
+          // instead of resizing to 600x600, so that high resolution is preserved perfectly.
+          const compressed = await compressBase64(localSiteSettings[key], 1920, 1080, 0.75);
           if (compressed !== localSiteSettings[key]) {
             scrubbedSettings = { ...scrubbedSettings, [key]: compressed };
             settingsChanged = true;
@@ -722,7 +724,10 @@ export default function AdminDashboard() {
     if (file) {
       try {
         setIsSaving(true);
-        const compressed = await compressImage(file, 1920, 1080, 0.7);
+        // If the file is under 500KB (512,000 bytes), use very high quality compression (0.92) to keep the original 1920x1080 fidelity.
+        // If it's over 500KB, apply standard 0.75 compression to bring the size under 500KB.
+        const quality = file.size <= 500 * 1024 ? 0.92 : 0.75;
+        const compressed = await compressImage(file, 1920, 1080, quality);
         setLocalSiteSettings(prev => {
           setIsDirty(d => ({ ...d, settings: true }));
           return { ...prev, [key]: compressed };

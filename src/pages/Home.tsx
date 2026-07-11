@@ -24,12 +24,15 @@ export default function Home() {
     // ... fallback
   ];
 
+  // Optimize Unsplash image URLs to use a balanced high-fidelity resolution (2000px width, 80% quality)
+  // instead of a massive 4K uncompressed image (3840px, q=100) which takes seconds to download
+  // and causes visible progressive loading/resolution changing.
   const heroImgUrl = siteSettings.homeHeroImg?.includes('unsplash.com') 
-    ? siteSettings.homeHeroImg.replace(/q=\d+/, 'q=100').replace(/w=\d+/, 'w=3840')
+    ? siteSettings.homeHeroImg.replace(/q=\d+/, 'q=80').replace(/w=\d+/, 'w=2000')
     : siteSettings.homeHeroImg;
 
-  const isDefaultHero = siteSettings.homeHeroImg === defaultSiteSettings.homeHeroImg;
-  const shouldShowHeroImg = !isDefaultHero || isInitialLoadDone.appearance;
+  // Show the hero image immediately when it exists to prevent mounting delay/flickers
+  const shouldShowHeroImg = !!siteSettings.homeHeroImg;
 
   return (
     <div>
