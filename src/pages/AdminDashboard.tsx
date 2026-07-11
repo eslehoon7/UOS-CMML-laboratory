@@ -2829,7 +2829,7 @@ export default function AdminDashboard() {
                   <button 
                     type="button"
                     onClick={() => setFieldsLocked(!fieldsLocked)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 border border-brand-ink/10 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 border border-brand-ink/10 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors mr-8"
                   >
                     {fieldsLocked ? (
                       <>
